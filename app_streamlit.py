@@ -28,47 +28,43 @@ if st.button("⚙️ Gerar Crachás") and df_file:
         for i in range(0, len(df), 4):
             final_pdf.insert_pdf(template, from_page=0, to_page=0)
             page = final_pdf[-1]  # última página adicionada
-            grupo = df.iloc[i:i+4]
+            grupo = df.iloc[i:i+4].reset_index(drop=True)
 
             for idx, linha in grupo.iterrows():
-                slot = idx % 4
+                sufixo = "" if idx == 0 else f" {idx+1}"
 
-                def write(rect, text):
-                    page.insert_textbox(fitz.Rect(*rect), str(text), fontsize=10, fontname="helv")
+                valores = {
+                    f"NOME{sufixo}": linha.get("Nome Completo", ""),
+                    f"IGREJA{sufixo}": linha.get("Unidade", ""),
+                    f"HORÁRIO DE RETORNO{sufixo}": horario,
+                    f"PLATAFORMA{sufixo}": plataforma,
+                    f"RESPONSÁVEL DA CARAVANA{sufixo}": responsavel,
+                    f"DDD DO RESP{sufixo}": ddd,
+                    f"TELEFONE DO RESPONSÁVEL{sufixo}": telefone,
+                    f"CONVÊNIO MÉDICO{sufixo}": linha.get("Nome do Plano", ""),
+                    f"TELEFONE DO CONVÊNIO{sufixo}": linha.get("Telefone do Plano", ""),
+                    f"NOME DO CONTATO{sufixo}": linha.get("Nome Contato de Emergência", ""),
+                    f"TELEFONE DO CONTATO{sufixo}": linha.get("Telefone Contato de Emergência", ""),
+                    f"POLTRONA{sufixo}": linha.get("Poltrona", "")
+                }
 
-                nome = linha.get("Nome Completo", "")
-                unidade = linha.get("Unidade", "")
-                plano = str(linha.get("Possuí Plano de Saúde?", "")).strip().lower() in ["sim", "yes"]
-                nome_plano = linha.get("Nome do Plano", "")
-                telefone_plano = linha.get("Telefone do Plano", "")
-                nome_contato = linha.get("Nome Contato de Emergência", "")
-                telefone_contato = linha.get("Telefone Contato de Emergência", "")
-                tipo_contato = linha.get("Tipo de Contato", "").strip().lower()
+                # Checkbox: possui plano
+                possui_plano = str(linha.get("Possuí Plano de Saúde?", "")).strip().lower() in ["sim", "yes"]
+                valores[f"Possui Convenio {idx+1 if idx > 0 else 1}"] = "yes" if possui_plano else "Off"
 
-                base_y = [75, 270, 470, 665][slot]  # Y base para cada crachá
+                # Checkbox: tipo de contato
+                tipo = str(linha.get("Tipo de Contato", "")).strip().lower()
+                if tipo == "familiar":
+                    valores[f"Tipo do Contato {idx+1 if idx > 0 else 1}"] = "familar"
+                elif tipo == "amigo":
+                    valores[f"Tipo do Contato {idx+1 if idx > 0 else 1}"] = "amigo"
 
-                write((70, base_y, 400, base_y+20), nome)
-                write((70, base_y+35, 400, base_y+55), unidade)
-                write((155, base_y+70, 400, base_y+90), horario)
-                write((155, base_y+95, 400, base_y+115), plataforma)
-                write((230, base_y+120, 500, base_y+140), responsavel)
-                write((145, base_y+145, 500, base_y+165), f"({ddd}) {telefone}")
-
-                if plano:
-                    write((170, base_y+170, 180, base_y+180), "X")  # Sim
-                else:
-                    write((240, base_y+170, 250, base_y+180), "X")  # Não
-
-                write((110, base_y+195, 400, base_y+215), nome_plano)
-                write((170, base_y+220, 400, base_y+240), telefone_plano)
-
-                if tipo_contato == "familiar":
-                    write((160, base_y+245, 180, base_y+255), "X")
-                elif tipo_contato == "amigo":
-                    write((260, base_y+245, 280, base_y+255), "X")
-
-                write((85, base_y+270, 400, base_y+290), nome_contato)
-                write((100, base_y+295, 400, base_y+315), telefone_contato)
+                # Preencher os campos da página
+                for widget in page.widgets():
+                    nome = widget.field_name.strip()
+                    if nome in valores:
+                        widget.field_value = str(valores[nome])
+                page.update_widgets()
 
         output = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         final_pdf.save(output.name)
