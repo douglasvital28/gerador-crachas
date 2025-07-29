@@ -67,11 +67,13 @@ if st.button("⚙️ Gerar Crachás") and df_file:
 
                 writer.update_page_form_field_values(writer.pages[0], data_dict)
 
+                # Salvar página preenchida em temp e reabrir como nova instância
                 temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 with open(temp_pdf.name, "wb") as tf:
                     writer.write(tf)
-                with open(temp_pdf.name, "rb") as tf:
-                    output_pdf.add_page(PdfReader(tf).pages[0])
+
+                filled_reader = PdfReader(temp_pdf.name)
+                output_pdf.add_page(filled_reader.pages[0])
 
         result_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         with open(result_pdf.name, "wb") as f:
