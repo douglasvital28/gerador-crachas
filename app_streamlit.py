@@ -3,7 +3,6 @@ import pandas as pd
 import tempfile
 import os
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2.generic import NameObject, ArrayObject
 
 TEMPLATE_PATH = "cracha_template.pdf"
 
@@ -67,9 +66,6 @@ if st.button("⚙️ Gerar Crachás") and df_file:
                         data_dict[f"Tipo do Contato {idx+1 if idx > 0 else 1}".strip()] = "amigo"
 
                 writer.update_page_form_field_values(writer.pages[0], data_dict)
-
-                for j in writer.pages:
-                    j[NameObject("/Annots")] = ArrayObject()
 
                 temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 with open(temp_pdf.name, "wb") as tf:
