@@ -8,7 +8,7 @@ TEMPLATE_PATH = "cracha_template.pdf"
 PLANILHA_MODELO = "modelo_planilha.xlsx"
 
 st.set_page_config(page_title="Gerador de Crachás", page_icon="🪪")
-st.title("🪪 Gerador de Crachás - Caravana")
+st.title("🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga")
 
 # Botão para baixar a planilha modelo
 with open(PLANILHA_MODELO, "rb") as modelo:
