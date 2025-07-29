@@ -22,10 +22,11 @@ telefone = st.text_input("Telefone do Responsável:")
 if st.button("⚙️ Gerar Crachás") and df_file:
     try:
         df = pd.read_excel(df_file)
-        output = PdfWriter()
+        output_writer = PdfWriter()
 
         for i in range(0, len(df), 4):
             grupo = df.iloc[i:i+4].reset_index(drop=True)
+
             with open(TEMPLATE_PATH, "rb") as f:
                 reader = PdfReader(f)
                 page = reader.pages[0]
@@ -67,17 +68,16 @@ if st.button("⚙️ Gerar Crachás") and df_file:
 
                 writer.update_page_form_field_values(writer.pages[0], data_dict)
 
-                # Salvar página e reabrir
                 temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 with open(temp_pdf.name, "wb") as tf:
                     writer.write(tf)
-                with open(temp_pdf.name, "rb") as tf:
-                    temp_reader = PdfReader(tf)
-                    output.add_page(temp_reader.pages[0])
+
+                filled_reader = PdfReader(temp_pdf.name)
+                output_writer.add_page(filled_reader.pages[0])
 
         result_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         with open(result_pdf.name, "wb") as f:
-            output.write(f)
+            output_writer.write(f)
 
         with open(result_pdf.name, "rb") as f:
             st.success("✅ Crachás gerados com sucesso!")
