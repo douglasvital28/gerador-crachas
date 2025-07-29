@@ -19,6 +19,20 @@ with open(PLANILHA_MODELO, "rb") as modelo:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+# Instruções para o usuário
+st.markdown("""
+### 📝 Como utilizar este gerador:
+
+1. 📄 Clique no botão **"Baixar Planilha Modelo"** para obter o Excel padrão
+2. ✍️ Preencha a planilha com os dados dos participantes
+3. 📤 Envie a planilha preenchida no campo abaixo
+4. ⌨️ Preencha os campos padrão como horário, plataforma e responsável
+5. ⚙️ Clique em **"Gerar Crachás"** para baixar o PDF pronto para impressão
+
+---
+ℹ️ Dica: os campos em branco na planilha serão deixados vazios no crachá.
+""")
+
 # Upload do Excel
 df_file = st.file_uploader("📥 Envie a planilha preenchida (Excel)", type=["xlsx"])
 
