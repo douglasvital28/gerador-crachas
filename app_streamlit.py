@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
+import fitz
 import tempfile
 import os
-from PyPDF2 import PdfReader, PdfWriter
 
 TEMPLATE_PATH = "cracha_template.pdf"
 
@@ -22,62 +22,48 @@ telefone = st.text_input("Telefone do Responsável:")
 if st.button("⚙️ Gerar Crachás") and df_file:
     try:
         df = pd.read_excel(df_file)
-        output_writer = PdfWriter()
+        df.columns = df.columns.str.strip()
+        grupos = [df[i:i + 4] for i in range(0, len(df), 4)]
 
-        for i in range(0, len(df), 4):
-            grupo = df.iloc[i:i+4].reset_index(drop=True)
+        def seguro(valor):
+            return "" if pd.isna(valor) or valor is None else str(valor).strip()
 
-            with open(TEMPLATE_PATH, "rb") as f:
-                reader = PdfReader(f)
-                page = reader.pages[0]
-                writer = PdfWriter()
-                writer.add_page(page)
+        pdf_saida = fitz.open()
 
-                data_dict = {}
+        for grupo_idx, grupo_df in enumerate(grupos):
+            doc = fitz.open(TEMPLATE_PATH)
+            page = doc[0]
+            widgets = list(page.widgets())
 
-                for idx, linha in grupo.iterrows():
-                    sufixo = "" if idx == 0 else f" {idx+1}"
+            for i, (_, pessoa) in enumerate(grupo_df.iterrows()):
+                sufixo = "" if i == 0 else f" {i+1}"
+                campos = {
+                    f"NOME{sufixo}": seguro(pessoa.get("Nome Completo")),
+                    f"IGREJA{sufixo}": seguro(pessoa.get("Unidade")),
+                    f"POLTRONA{sufixo}": seguro(pessoa.get("Poltrona")),
+                    f"HORÁRIO DE RETORNO{sufixo}": horario,
+                    f"PLATAFORMA{sufixo}": plataforma,
+                    f"RESPONSÁVEL DA CARAVANA{sufixo}": responsavel,
+                    f"DDD DO RESP{sufixo}": ddd,
+                    f"TELEFONE DO RESPONSÁVEL{sufixo}": telefone,
+                    f"CONVÊNIO MÉDICO{sufixo}": seguro(pessoa.get("Nome do Plano")),
+                    f"TELEFONE DO CONVÊNIO{sufixo}": seguro(pessoa.get("Telefone do Plano")),
+                    f"NOME DO CONTATO{sufixo}": seguro(pessoa.get("Nome Contato de Emergência")),
+                    f"TELEFONE DO CONTATO{sufixo}": seguro(pessoa.get("Telefone Contato de Emergência"))
+                }
 
-                    def safe(col):
-                        v = linha.get(col, "")
-                        return "" if pd.isna(v) else str(v)
+                for widget in widgets:
+                    nome = widget.field_name
+                    if nome in campos:
+                        widget.field_value = campos[nome]
+                        widget.update()
 
-                    data_dict.update({
-                        f"NOME{sufixo}": safe("Nome Completo"),
-                        f"IGREJA{sufixo}": safe("Unidade"),
-                        f"HORÁRIO DE RETORNO{sufixo}": horario,
-                        f"PLATAFORMA{sufixo}": plataforma,
-                        f"RESPONSÁVEL DA CARAVANA{sufixo}": responsavel,
-                        f"DDD DO RESP{sufixo}": ddd,
-                        f"TELEFONE DO RESPONSÁVEL{sufixo}": telefone,
-                        f"CONVÊNIO MÉDICO{sufixo}": safe("Nome do Plano"),
-                        f"TELEFONE DO CONVÊNIO{sufixo}": safe("Telefone do Plano"),
-                        f"NOME DO CONTATO{sufixo}": safe("Nome Contato de Emergência"),
-                        f"TELEFONE DO CONTATO{sufixo}": safe("Telefone Contato de Emergência"),
-                        f"POLTRONA{sufixo}": safe("Poltrona")
-                    })
-
-                    plano = str(linha.get("Possuí Plano de Saúde?", "")).strip().lower()
-                    data_dict[f"Possui Convenio {idx+1 if idx > 0 else 1}"] = "yes" if plano in ["sim", "yes"] else "Off"
-
-                    tipo = str(linha.get("Tipo de Contato", "")).strip().lower()
-                    if tipo == "familiar":
-                        data_dict[f"Tipo do Contato {idx+1 if idx > 0 else 1}"] = "familar"
-                    elif tipo == "amigo":
-                        data_dict[f"Tipo do Contato {idx+1 if idx > 0 else 1}"] = "amigo"
-
-                writer.update_page_form_field_values(writer.pages[0], data_dict)
-
-                temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-                with open(temp_pdf.name, "wb") as tf:
-                    writer.write(tf)
-
-                filled_reader = PdfReader(temp_pdf.name)
-                output_writer.add_page(filled_reader.pages[0])
+            pdf_saida.insert_pdf(doc)
+            doc.close()
 
         result_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        with open(result_pdf.name, "wb") as f:
-            output_writer.write(f)
+        pdf_saida.save(result_pdf.name)
+        pdf_saida.close()
 
         with open(result_pdf.name, "rb") as f:
             st.success("✅ Crachás gerados com sucesso!")
