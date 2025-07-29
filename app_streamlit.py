@@ -3,6 +3,7 @@ import pandas as pd
 import tempfile
 import os
 from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2.generic import NameObject, ArrayObject
 
 TEMPLATE_PATH = "cracha_template.pdf"
 
@@ -27,14 +28,12 @@ if st.button("⚙️ Gerar Crachás") and df_file:
         for i in range(0, len(df), 4):
             grupo = df.iloc[i:i+4].reset_index(drop=True)
 
-            # Carrega template e cria nova cópia
             with open(TEMPLATE_PATH, "rb") as f:
                 reader = PdfReader(f)
                 page = reader.pages[0]
                 writer = PdfWriter()
                 writer.add_page(page)
 
-                # Construir os dados para esta página
                 data_dict = {}
                 for idx, linha in grupo.iterrows():
                     sufixo = "" if idx == 0 else f" {idx+1}"
@@ -67,13 +66,11 @@ if st.button("⚙️ Gerar Crachás") and df_file:
                     elif tipo == "amigo":
                         data_dict[f"Tipo do Contato {idx+1 if idx > 0 else 1}".strip()] = "amigo"
 
-                # Preenche os campos da página
                 writer.update_page_form_field_values(writer.pages[0], data_dict)
-                # Remove campos interativos do PDF final (opcional: travar)
-                for j in writer.pages:
-                    j["/Annots"] = []
 
-                # Adiciona ao PDF final
+                for j in writer.pages:
+                    j[NameObject("/Annots")] = ArrayObject()
+
                 temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 with open(temp_pdf.name, "wb") as tf:
                     writer.write(tf)
