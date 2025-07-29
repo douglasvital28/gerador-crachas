@@ -24,7 +24,7 @@ st.markdown("""
 ### 📝 Como utilizar este gerador:
 
 1. 📄 Clique no botão acima **"Baixar Planilha Modelo"** para obter o Excel padrão
-2. ✍️ Preencha a planilha com os dados dos participantes
+2. ✍️ Preencha a planilha com os dados dos caravanistas
 3. 📤 Envie a planilha preenchida no campo abaixo
 4. ⌨️ Preencha os campos padrão como horário, plataforma e responsável
 5. ⚙️ Clique em **"Gerar Crachás"** para baixar o PDF pronto para impressão
