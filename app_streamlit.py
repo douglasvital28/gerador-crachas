@@ -5,9 +5,19 @@ import tempfile
 import os
 
 TEMPLATE_PATH = "cracha_template.pdf"
+PLANILHA_MODELO = "modelo_planilha.xlsx"
 
 st.set_page_config(page_title="Gerador de Crachás", page_icon="🪪")
 st.title("🪪 Gerador de Crachás - Caravana")
+
+# Botão para baixar a planilha modelo
+with open(PLANILHA_MODELO, "rb") as modelo:
+    st.download_button(
+        label="📄 Baixar modelo de planilha",
+        data=modelo,
+        file_name="modelo_planilha.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # Upload do Excel
 df_file = st.file_uploader("📥 Envie a planilha preenchida (Excel)", type=["xlsx"])
