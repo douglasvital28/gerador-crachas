@@ -13,7 +13,7 @@ st.title("🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga")
 # Botão para baixar a planilha modelo
 with open(PLANILHA_MODELO, "rb") as modelo:
     st.download_button(
-        label="📄 Baixar modelo de planilha",
+        label="📄 Baixar Planilha Modelo",
         data=modelo,
         file_name="modelo_planilha.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
