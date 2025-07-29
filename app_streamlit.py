@@ -30,7 +30,7 @@ st.markdown("""
 5. ⚙️ Clique em **"Gerar Crachás"** para baixar o PDF pronto para impressão
 
 ---
-ℹ️ Dica: os campos em branco na planilha serão deixados vazios no crachá. Revise os dados, pois nomes muito grandes podem sair do espaço padrão. A seleção das opções "Possui convênio médico?" e "Tipo do contato" precisam ser selecionados manualmente por enquanto.
+ℹ️ Dica: os campos em branco na planilha serão deixados vazios no crachá. Revise os dados, pois nomes muito grandes podem sair do espaço padrão. A seleção das opções "Possui convênio médico?" e "Tipo do contato" precisam ser selecionadas manualmente por enquanto.
 """)
 
 # Upload do Excel
