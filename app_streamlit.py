@@ -22,15 +22,16 @@ telefone = st.text_input("Telefone do Responsável:")
 if st.button("⚙️ Gerar Crachás") and df_file:
     try:
         df = pd.read_excel(df_file)
-        template_pdf = fitz.open(TEMPLATE_PATH)
+        template = fitz.open(TEMPLATE_PATH)
         final_pdf = fitz.open()
 
         for i in range(0, len(df), 4):
-            page = template_pdf[0].copy()
+            final_pdf.insert_pdf(template, from_page=0, to_page=0)
+            page = final_pdf[-1]  # última página adicionada
             grupo = df.iloc[i:i+4]
 
             for idx, linha in grupo.iterrows():
-                slot = idx % 4  # 0 a 3
+                slot = idx % 4
 
                 def write(rect, text):
                     page.insert_textbox(fitz.Rect(*rect), str(text), fontsize=10, fontname="helv")
@@ -44,7 +45,7 @@ if st.button("⚙️ Gerar Crachás") and df_file:
                 telefone_contato = linha.get("Telefone Contato de Emergência", "")
                 tipo_contato = linha.get("Tipo de Contato", "").strip().lower()
 
-                base_y = [75, 270, 470, 665][slot]  # posição vertical para cada crachá
+                base_y = [75, 270, 470, 665][slot]  # Y base para cada crachá
 
                 write((70, base_y, 400, base_y+20), nome)
                 write((70, base_y+35, 400, base_y+55), unidade)
@@ -68,8 +69,6 @@ if st.button("⚙️ Gerar Crachás") and df_file:
 
                 write((85, base_y+270, 400, base_y+290), nome_contato)
                 write((100, base_y+295, 400, base_y+315), telefone_contato)
-
-            final_pdf.insert_pdf(page)
 
         output = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         final_pdf.save(output.name)
