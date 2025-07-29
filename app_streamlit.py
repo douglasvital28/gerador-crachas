@@ -63,7 +63,10 @@ if st.button("⚙️ Gerar Crachás") and df_file:
                 for widget in page.widgets():
                     nome = widget.field_name.strip()
                     if nome in valores:
-                        widget.field_value = str(valores[nome])
+                        valor = valores[nome]
+                        if pd.isna(valor):
+                            valor = ""
+                        widget.field_value = str(valor)
                         widget.update()
 
         output = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
