@@ -1,3 +1,0 @@
-([('gerar_interface',
-   '/Users/douglasvital/Documents/Igreja/GeradorCrachas/dist/gerar_interface',
-   'EXECUTABLE')],)
