@@ -62,3 +62,9 @@ As abas alternam entre os pisos. Um número livre pode ser escolhido; `×` indic
 Poltronas importadas são preservadas, e `001` é reconhecida como 1. Duplicidades e números fora do modelo geram avisos, sem apagar os dados. Trocar de modelo não renumera nem remove lugares. Arquivos sem a coluna Poltrona também são aceitos: o campo é criado vazio para preencher pelo mapa ou tabela.
 
 O mapa mantém as outras correções e a seleção de impressão da tabela. Atribuições aparecem nos crachás, lista de conferência e planilha exportada; resultados anteriores são invalidados quando os dados mudam. As escolhas ficam na sessão individual e não são sincronizadas com outros usuários. Baixe a planilha com as escolhas para guardá-las.
+
+## Google Sheets (teste)
+
+A origem **Google Sheets (teste)** permite conectar uma conta Google e importar uma aba privada de respostas do Forms, associando perguntas aos campos do aplicativo. O login real depende da configuração descrita em [CONFIGURAR_GOOGLE.md](CONFIGURAR_GOOGLE.md). Sem ela, a tela informa que a conexão está em preparação; o upload Excel continua funcionando.
+
+O protótipo preserva correções e poltronas na atualização por identificador único da inscrição, com isolamento por conta/planilha/aba. Não inclui armazenamento permanente de viagens: exporte o Excel antes de sair. A autorização real e a leitura de planilhas precisam ser conferidas no aplicativo de teste após cadastrar o projeto Google Cloud e seus usuários de teste.

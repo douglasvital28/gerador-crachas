@@ -26,7 +26,13 @@ Números locais, serviços como 0800 e formatos não reconhecidos serão mantido
 Preencha **Possuí Plano de Saúde?** com Sim/Não e **Tipo de Contato** com Familiar/Amigo.
 Você também pode selecionar essas opções na tabela abaixo. Em branco significa sem marcação.
 ''')
-df_file = st.file_uploader('📥 Envie a planilha preenchida (Excel)', type=['xlsx'], max_upload_size=5)
+origem_dados = st.radio('Origem dos participantes', ['Planilha Excel', 'Google Sheets (teste)'],
+                        horizontal=True, key='origem_dados')
+if origem_dados == 'Google Sheets (teste)':
+    from fonte_google import conectar_google
+    df_file = conectar_google()
+else:
+    df_file = st.file_uploader('📥 Envie a planilha preenchida (Excel)', type=['xlsx'], max_upload_size=5)
 horario = st.text_input('Horário de Retorno:', placeholder='18:00')
 plataforma = st.text_input('Plataforma:')
 responsavel = st.text_input('Responsável:')
@@ -64,12 +70,16 @@ if df_file:
             column_order=[coluna_selecao, 'Nome Completo', CONVENIO, CONTATO,
                           *[c for c in df.columns if c not in ('Nome Completo', CONVENIO, CONTATO)]],
             column_config={coluna_selecao: st.column_config.CheckboxColumn('Gerar crachá', default=True),
+                           '_ID_Inscricao': None,
                            **{c: st.column_config.SelectboxColumn(
                 'Possui convênio?' if c == CONVENIO else 'Tipo de contato',
                 options=['', *opcoes], required=False,
             ) for c, opcoes in OPCOES.items()}},
         )
         tabela_mapa = df.copy(deep=True)
+        if origem_dados == 'Google Sheets (teste)':
+            from fonte_google import registrar_trabalho
+            registrar_trabalho(tabela_mapa, identidade_planilha)
         mascara = df[coluna_selecao].fillna(False).astype(bool)
         df = validar_edicao(df.drop(columns=[coluna_selecao]))
         selecionados = df.loc[mascara].copy()
