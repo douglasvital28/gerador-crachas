@@ -11,12 +11,38 @@ def normalizar(valor):
 
 
 def inferir_trajeto(observacoes):
+    """Reconhece afirmações claras; dúvidas, terceiros e sinais conflitantes mantêm o padrão."""
     texto = normalizar(observacoes)
-    if re.search(r'\bnao (?:so|somente|apenas)\b|\b(?:ida|vai) e (?:volta|retorno)\b', texto):
+    # Não atribuir ao passageiro frases sobre familiares ou planos ainda incertos.
+    ambiguo = r'\b(?:talvez|depende|provavelmente|possivelmente|se|caso|acho|pretendo|a confirmar|nao sei|nao tenho certeza)\b'
+    terceiros = r'\b(?:meu|minha|meus|minhas|acompanhante|acompanhantes|ele|ela|eles|elas)\b'
+    if re.search(ambiguo, texto) or re.search(terceiros, texto) or '?' in texto:
         return 'IDA E VOLTA'
-    texto = re.sub(r'\b(so|somente|apenas) (?:vai|ira) (?:voltar|retornar)\b', r'\1 volta', texto)
-    ida = bool(re.search(r'\b(?:so|somente|apenas) (?:de |na )?(?:vai|ira|ir|ida)\b|\b(?:vai|ira) (?:so|somente|apenas)\b', texto))
-    volta = bool(re.search(r'\b(?:so|somente|apenas) (?:de |na )?(?:volta|voltara|voltar|retorno|retornar)\b|\b(?:volta|voltara) (?:so|somente|apenas)\b', texto))
+    if re.search(r'\bnao (?:so|somente|apenas)\b', texto):
+        return 'IDA E VOLTA'
+    ida_verbo = r'(?:vou|vai|irei|ira|iremos|irao|ir)'
+    volta_verbo = r'(?:volto|volta|voltarei|voltara|voltaremos|voltarao|voltar|retorno|retorna|retornarei|retornara|retornaremos|retornarao|retornar|regresso|regressarei|regressar)'
+    # "Só vou retornar" refere-se à volta, e não à ida.
+    texto = re.sub(r'\b(so|somente|apenas) (?:vou|vai|irei|ira) (?:voltar|retornar|regressar)\b', r'\1 volta', texto)
+    exclusivo = r'(?:so|somente|apenas|unicamente|exclusivamente)'
+    ida = bool(re.search(rf'\b{exclusivo} (?:de |na |a )?(?:ida|{ida_verbo})\b|\b(?:ida|{ida_verbo}) {exclusivo}\b', texto))
+    volta = bool(re.search(rf'\b{exclusivo} (?:de |na |a )?(?:volta|retorno|{volta_verbo})\b|\b(?:volta|retorno|{volta_verbo}) {exclusivo}\b', texto))
+    grupo = r'(?:com|na|no|pela|pelo) (?:a |o )?(?:caravana|grupo|onibus|excursao)'
+    fim = r'(?=\s*(?:[.!;,]|e nao\b|$))'
+    # Negação só é aceita isolada ou quando explicitamente ligada à caravana.
+    nao_ida = bool(re.search(rf'\bnao (?:{ida_verbo}|vou ir)(?: {grupo}|\s*{fim})', texto))
+    nao_volta = bool(re.search(rf'\bnao (?:{volta_verbo}|vou voltar|vou retornar|irei voltar|irei retornar)(?: {grupo}|\s*{fim})', texto))
+    proprio = r'(?:por conta propria|por meios proprios|de (?:carro|uber|taxi|aviao|moto|trem)|(?:com|em|de|num|numa|no|na) (?:um |uma )?outr[oa] (?:onibus|caravana|grupo|excursao))'
+    def afirmado(padrao):
+        return any(not re.search(r'\bnao(?: \w+){0,3}\s*$', texto[max(0, m.start()-40):m.start()])
+                   for m in re.finditer(padrao, texto))
+    fora_ida = afirmado(rf'\b(?:{ida_verbo}|a ida sera|ida) {proprio}\b')
+    fora_volta = afirmado(rf'\b(?:{volta_verbo}|a volta sera|o retorno sera|volta|retorno) {proprio}\b')
+    ida = ida or nao_volta or fora_volta
+    volta = volta or nao_ida or fora_ida
+    # Afirmação explícita dos dois sentidos impede inferência parcial sem exclusão clara.
+    if not (nao_ida or nao_volta or fora_ida or fora_volta) and re.search(r'\b(?:ida|vai|vou) e (?:volta|retorno|volto)\b', texto):
+        return 'IDA E VOLTA'
     return 'SOMENTE IDA' if ida and not volta else 'SOMENTE VOLTA' if volta and not ida else 'IDA E VOLTA'
 
 

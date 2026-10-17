@@ -15,6 +15,28 @@ from test_geracao import pessoa, excel
 
 
 class TrajetosTest(unittest.TestCase):
+    def test_vocabulario_ampliado_e_ambiguidades(self):
+        exemplos = {
+            'SOMENTE IDA': ['Não retornarei com a Caravana', 'Não voltarei com o grupo',
+                           'Não vou retornar com a caravana', 'Não retorno', 'Não voltarei.',
+                           'Voltarei de carro', 'Volto por conta própria', 'Retorno por meios próprios',
+                           'Volto em outro ônibus', 'Retornarei com outra caravana', 'A volta será de Uber',
+                           'Irei apenas', 'Somente irei', 'Apenas ida', 'Vou na caravana, volto de carro'],
+            'SOMENTE VOLTA': ['Não irei com a caravana', 'Não vou com o grupo', 'Não vou.',
+                             'Vou de carro', 'Irei por conta própria', 'Ida por meios próprios',
+                             'Só retornarei', 'Apenas voltarei', 'Somente vou retornar',
+                             'Vou com outra caravana', 'Irei de carro e voltarei com a caravana'],
+            'IDA E VOLTA': ['Talvez não retornarei com a caravana', 'Minha mãe não voltará com a caravana',
+                           'Ele só volta', 'Se chover, não volto', 'Não retornarei com a caravana?',
+                           'Não voltarei de carro', 'Não irei de Uber', 'Não sei se vou',
+                           'Não só vou como volto', 'Somente ida e volta', 'Vou e volto',
+                           'Não vou e não volto', 'Ida de carro e volta de carro', 'Retorno com a caravana'],
+        }
+        for esperado, textos in exemplos.items():
+            for texto in textos:
+                with self.subTest(texto=texto):
+                    self.assertEqual(inferir_trajeto(texto), esperado)
+
     def test_observacoes_e_escolha_explicita(self):
         for texto, esperado in [('Só vai', 'SOMENTE IDA'), ('somente ida com o grupo', 'SOMENTE IDA'),
                                 ('só volta', 'SOMENTE VOLTA'), ('apenas retorno', 'SOMENTE VOLTA'),

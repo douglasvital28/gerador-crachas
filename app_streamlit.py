@@ -42,7 +42,7 @@ Confira os avisos de nomes e poltronas repetidos antes de continuar.
 A coluna **Gerar crachá** controla quem terá crachá impresso.
 A lista de embarque permite escolher todos ou apenas os selecionados; o mapa impresso inclui todos.
 
-**Trajeto:** todos começam como **IDA E VOLTA**. Observações claras como “só vai”, “somente ida”, “só volta” ou “somente volta” sugerem o sentido na importação; confira e altere a coluna **Trajeto** quando necessário. Uma escolha de trajeto já preenchida tem prioridade sobre as observações. Textos ambíguos mantêm Ida e volta.
+**Trajeto:** todos começam como **IDA E VOLTA**. Observações claras como “só vai”, “não retornarei com a caravana” ou “voltarei de carro” sugerem SOMENTE IDA; “só volta”, “não irei com a caravana” ou “irei por conta própria” sugerem SOMENTE VOLTA. A leitura acontece na importação; confira e altere a coluna **Trajeto** quando necessário. Uma escolha de trajeto já preenchida tem prioridade sobre as observações. Textos ambíguos mantêm Ida e volta.
 Dois passageiros podem usar a mesma poltrona se um viajar somente na ida e o outro somente na volta. Se houver conflito no mesmo sentido, corrija o trajeto ou a poltrona. O mapa impresso será separado por ida e volta quando houver passageiros de um só sentido; na Lista de Caravanistas, o sentido que não será utilizado aparece com hífen.
 
 ### 3 · Escolha ou revise os assentos
