@@ -54,7 +54,7 @@ def atribuir_poltrona(tabela, passageiro, poltrona, modelo):
     return resultado
 
 
-def mostrar_mapa(tabela, identidade, titulo='Escolha de poltronas'):
+def mostrar_mapa(tabela, identidade, titulo=None):
     import streamlit as st
 
     def salvar(passageiro, lugar, modelo):
@@ -66,7 +66,8 @@ def mostrar_mapa(tabela, identidade, titulo='Escolha de poltronas'):
         except ValueError as exc:
             st.session_state['mapa_erro_' + identidade] = str(exc)
 
-    st.subheader(titulo)
+    if titulo:
+        st.subheader(titulo)
     st.caption('Escolha o passageiro e clique em um lugar livre. Para mudar de lugar, clique na nova poltrona.')
     st.caption('Organize um ônibus por planilha. Trocar o modelo não altera as poltronas já preenchidas.')
     modelo = st.selectbox('Modelo do ônibus', [43, 46], format_func=lambda n: f'Leito · {n} lugares',

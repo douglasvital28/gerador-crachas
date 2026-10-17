@@ -11,6 +11,18 @@ from geracao import ler_planilha
 
 
 class SelecaoTest(unittest.TestCase):
+    def test_mapa_compativel_com_funcao_anterior_em_memoria(self):
+        from mapa_onibus import mostrar_mapa
+        dados = excel([pessoa()])
+        def mapa_anterior(tabela, identidade):
+            return mostrar_mapa(tabela, identidade)
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
+             patch('mapa_onibus.mostrar_mapa', side_effect=mapa_anterior):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(any(h.value == '3 · Escolher assentos' for h in app.subheader))
+            self.assertFalse(app.button('gerar_crachas').disabled)
+
     def test_jornada_em_ordem_maiusculas_e_identificador_preservado(self):
         from geracao import COLUNAS
         dados = excel([pessoa('Min. Maria da Conceição Souza') + ['registro-aBc']],

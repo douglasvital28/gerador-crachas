@@ -100,7 +100,8 @@ if df is None:
     st.stop()
 
 from mapa_onibus import mostrar_mapa
-mostrar_mapa(tabela_mapa, identidade_planilha, titulo='3 · Escolher assentos')
+st.subheader('3 · Escolher assentos')
+mostrar_mapa(tabela_mapa, identidade_planilha)
 
 st.subheader('4 · Informar os dados do ônibus')
 def maiuscula_campo(chave):
