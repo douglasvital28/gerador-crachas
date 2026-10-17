@@ -1,4 +1,6 @@
 """Padronização dos dados visíveis sem alterar identificadores de inscrições."""
+VERSAO_ORDENACAO = 2
+
 CAMPOS_MAIUSCULOS = (
     'Nome Completo', 'Unidade', 'Poltrona', 'Nome do Plano', 'Telefone do Plano',
     'Nome Contato de Emergência', 'Telefone Contato de Emergência',

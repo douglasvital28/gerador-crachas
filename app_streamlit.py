@@ -5,6 +5,11 @@ from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_plan
 from recursos import validar_caravana, exportar_planilha, renderizar_pagina
 from edicao import validar_edicao
 from trajetos import TRAJETOS, preparar_trajetos
+import padronizacao
+# Atualiza a regra se o Streamlit ainda conservar o módulo anterior na memória.
+if getattr(padronizacao, 'VERSAO_ORDENACAO', None) != 2:
+    from importlib import reload
+    reload(padronizacao)
 from padronizacao import maiusculas_participantes, ordenar_por_missao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')

@@ -18,6 +18,31 @@ class OrganizacaoTest(unittest.TestCase):
         self.assertEqual(ordenar_participantes(tabela, 'Missão e nome').to_dict('records'), ordenada.to_dict('records'))
         self.assertEqual(ordenar_por_missao(ordenada).to_dict('records'), ordenada.to_dict('records'))
 
+    def test_atualiza_regra_antiga_em_memoria_sem_perder_poltronas(self):
+        from io import BytesIO
+        from hashlib import sha256
+        from unittest.mock import patch
+        from streamlit.testing.v1 import AppTest
+        from geracao import BASE, COLUNAS
+        from test_geracao import pessoa, excel
+        import padronizacao
+        linhas = [pessoa('Ana') + ['Assistente de Família'],
+                  pessoa('Bruno') + ['Responsável de Setor'],
+                  pessoa('Carla') + ['Assistente de Ministro']]
+        for i, linha in enumerate(linhas):
+            linha[2] = str(i+1)
+        dados = excel(linhas, [*COLUNAS, 'Missão'])
+        ident = sha256(dados).hexdigest()
+        # Simula a atualização do app com a implementação anterior ainda importada.
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
+             patch.object(padronizacao, 'VERSAO_ORDENACAO', None), \
+             patch.object(padronizacao, 'ordenar_por_missao', lambda df: df):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            tabela = app.dataframe[0].value
+            self.assertEqual(tabela['Nome Completo'].tolist(), ['CARLA', 'BRUNO', 'ANA'])
+            self.assertEqual(tabela['Poltrona'].tolist(), ['3', '2', '1'])
+
     def test_modelo_com_missao_importavel(self):
         from geracao import BASE, ler_planilha
         from test_geracao import excel
