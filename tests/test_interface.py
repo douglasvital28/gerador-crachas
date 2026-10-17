@@ -6,9 +6,56 @@ from pypdf import PdfReader
 from streamlit.testing.v1 import AppTest
 from geracao import BASE, CONVENIO, CONTATO
 from test_geracao import excel, pessoa
+from recursos import exportar_planilha
+from geracao import ler_planilha
 
 
 class SelecaoTest(unittest.TestCase):
+    def test_correcao_selecao_e_exportacao_completa(self):
+        dados = excel([pessoa(f'Pessoa {i}') for i in range(5)])
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
+             patch('recursos.exportar_planilha', wraps=exportar_planilha) as exportar:
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            editor = 'participantes_' + sha256(dados).hexdigest()
+            alteracoes = {i: {'Gerar crachá': False} for i in range(4)}
+            alteracoes[4] = {'Nome Completo': 'Nome Corrigido', 'Poltrona': '009',
+                             'Telefone Contato de Emergência': '(21) 91234-5678'}
+            app.session_state[editor] = {'edited_rows': alteracoes, 'added_rows': [], 'deleted_rows': []}
+            app.run()
+            self.assertFalse(app.exception)
+            planilha = ler_planilha(exportar_planilha(exportar.call_args.args[0]))
+            self.assertEqual(len(planilha), 5)
+            self.assertNotIn('Gerar crachá', planilha.columns)
+            self.assertEqual(planilha.iloc[4]['Poltrona'], '009')
+            app.button[0].click().run()
+            self.assertFalse(app.exception)
+            reader = PdfReader(BytesIO(app.session_state['pdf']))
+            self.assertEqual(len(reader.pages), 1)
+            fields = reader.get_fields()
+            self.assertEqual(fields['NOME']['/V'], 'Nome Corrigido')
+            self.assertEqual(fields['POLTRONA']['/V'], '009')
+            self.assertEqual(fields['DDD Contato']['/V'], '21')
+            self.assertFalse(fields['NOME 2'].get('/V'))
+            alteracoes[4]['Gerar crachá'] = False
+            app.session_state[editor] = {'edited_rows': alteracoes, 'added_rows': [], 'deleted_rows': []}
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.button[0].disabled)
+            self.assertNotIn('pdf', app.session_state)
+            self.assertTrue(app.info)
+
+    def test_nome_vazio_na_edicao_bloqueia_geracao(self):
+        dados = excel([pessoa()])
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            editor = 'participantes_' + sha256(dados).hexdigest()
+            app.session_state[editor] = {'edited_rows': {0: {'Nome Completo': '  '}},
+                                         'added_rows': [], 'deleted_rows': []}
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.button[0].disabled)
+            self.assertIn('Nome Completo', app.error[0].value)
+
     def test_previa_navegavel_e_validacao(self):
         linhas = [pessoa(f'Pessoa {i}') for i in range(5)]
         for i, linha in enumerate(linhas):

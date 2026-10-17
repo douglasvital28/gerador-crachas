@@ -20,9 +20,9 @@ No Streamlit Community Cloud, selecione `app_streamlit.py` como arquivo principa
 1. Baixe a planilha modelo no aplicativo e mantenha os nomes das colunas.
 2. Preencha os participantes. Cada linha preenchida precisa de Nome Completo; linhas totalmente vazias são ignoradas.
 3. Formate telefones e poltronas como Texto no Excel antes de digitar, para preservar zeros à esquerda. Zeros já perdidos pelo Excel não podem ser recuperados pelo aplicativo.
-4. Envie a planilha (até 5 MB e 400 participantes), confira a prévia e informe os dados da caravana.
-5. Gere os crachás e confira a prévia, selecionando uma página por vez. Baixe o PDF para imprimir em tamanho real.
-6. Use **Baixar planilha com minhas escolhas** para guardar os participantes com as seleções de convênio e contato e reutilizar o Excel em outra geração. A exportação é uma nova tabela de participantes: não inclui os campos da caravana nem preserva outras abas, fórmulas ou a formatação do arquivo enviado.
+4. Envie a planilha (até 5 MB e 400 participantes), corrija nome, unidade, poltrona, plano, contato e telefones na tabela e informe os dados da caravana. Nome Completo precisa continuar preenchido. Colunas extras do arquivo são preservadas, mas não editáveis.
+5. Na coluna **Gerar crachá**, desmarque quem não precisa de impressão. Todos começam marcados. O PDF contém apenas os selecionados, na ordem da planilha, agrupados em quatro por página. Marque ao menos uma pessoa. Gere os crachás e confira a prévia, selecionando uma página por vez. Baixe o PDF para imprimir em tamanho real.
+6. Use **Baixar planilha com minhas escolhas** para guardar todos os participantes com as correções e seleções de convênio e contato, inclusive os desmarcados para impressão e reutilizar o Excel em outra geração. A seleção para impressão não é salva no Excel: ao reenviar o arquivo, todos começam marcados. A exportação é uma nova tabela de participantes: não inclui os campos da caravana nem preserva outras abas, fórmulas ou a formatação do arquivo enviado.
 
 Os campos opcionais podem ficar vazios. A fonte é reduzida para acomodar textos maiores; se ficar pequena demais para leitura, o aplicativo solicita abreviar o conteúdo. As colunas `Possuí Plano de Saúde?` (Sim/Não) e `Tipo de Contato` (Familiar/Amigo) preenchem automaticamente as marcações do PDF. Você também pode selecionar essas opções na tabela do aplicativo antes de gerar. Valores em branco deixam as opções desmarcadas; valores inválidos indicam a linha da planilha a corrigir. Maiúsculas/minúsculas e acentos são normalizados. Planilhas antigas sem essas duas colunas continuam funcionando: faça as escolhas na tabela.
 
@@ -34,7 +34,7 @@ Horário, DDD e telefone do responsável são opcionais. Se informar horário, u
 
 A prévia renderiza somente a página selecionada em memória. Trocar de página mantém o PDF; alterar os dados remove o resultado anterior e a próxima geração começa na página 1. A prévia é uma imagem para conferência; o download continua sendo o PDF editável original. Se a prévia falhar, o download permanece disponível.
 
-O PDF é gerado em memória, sem arquivos temporários no servidor, e fica disponível na sessão do usuário. Alterar a planilha, as seleções da tabela ou os dados da caravana remove o resultado anterior para evitar baixar um PDF desatualizado. Recarregar a página pode encerrar a sessão; baixe o arquivo para guardá-lo. O limite de participantes é uma proteção inicial, não uma garantia de capacidade sob muitos acessos simultâneos.
+O PDF é gerado em memória, sem arquivos temporários no servidor, e fica disponível na sessão do usuário. Alterar a planilha, as correções, a seleção para impressão ou os dados da caravana remove o resultado anterior para evitar baixar um PDF desatualizado. Recarregar a página pode encerrar a sessão; baixe o arquivo para guardá-lo. O limite de participantes é uma proteção inicial, não uma garantia de capacidade sob muitos acessos simultâneos.
 
 ## Testes
 
