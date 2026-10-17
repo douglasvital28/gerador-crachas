@@ -1,5 +1,6 @@
 """Mapas dos leitos de 43 e 46 lugares, conforme referências da caravana."""
 import pandas as pd
+from html import escape
 
 MAPAS = {
     43: {
@@ -18,6 +19,11 @@ MAPAS = {
 def numero_poltrona(valor):
     texto = '' if pd.isna(valor) else str(valor).strip()
     return int(texto) if texto.isascii() and texto.isdecimal() else None
+
+
+def nome_curto(nome):
+    partes = str(nome).split()
+    return ' '.join(partes if len(partes) <= 2 else [partes[0], partes[-1]])
 
 
 def ocupacao(tabela):
@@ -101,6 +107,7 @@ def mostrar_mapa(tabela, identidade):
 .st-key-mapa_onibus button[kind="primary"] {background:#166b70;border-color:#166b70;border-radius:12px;min-height:54px;color:white;}
 .st-key-mapa_onibus button:disabled {background:#edf0f3!important;border-color:#ccd3db!important;color:#627084!important;opacity:1;}
 .st-key-mapa_onibus button p {font-size:13px!important;}
+.st-key-mapa_onibus .ocupante {text-align:center;font-size:12px;line-height:1.35;color:#304a54;overflow-wrap:anywhere;padding:0 2px 6px;}
 </style>''', unsafe_allow_html=True)
         st.markdown('''<div style="text-align:center;padding:14px 0 20px;color:#245a65;letter-spacing:2px;font-size:11px;font-weight:700">
 FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-radius:30px 30px 7px 7px;background:linear-gradient(100deg,#b9e1e7,#e5f2f5,#b9e1e7)"></div></div>''', unsafe_allow_html=True)
@@ -130,6 +137,9 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                                       disabled=bool(indices) and not atual,
                                       help=f'{legenda}: {nomes}' if nomes else f'Atribuir poltrona {assento}',
                                       on_click=salvar, args=(passageiro, assento, modelo))
+                            if indices:
+                                visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) for i in indices)
+                                st.markdown(f'<div class="ocupante">{visiveis}</div>', unsafe_allow_html=True)
         st.caption('Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
     st.button('Liberar poltrona deste passageiro',
               disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),

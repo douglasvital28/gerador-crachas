@@ -44,6 +44,7 @@ class MapaTest(unittest.TestCase):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.button(f'assento_{ident}_43_1').disabled)
+            self.assertTrue(any('class="ocupante">Ana' in m.value for m in app.markdown))
             app.session_state['participantes_' + ident] = {
                 'edited_rows': {1: {'Nome Completo': 'Bruno Corrigido', 'Gerar crachá': False}},
                 'added_rows': [], 'deleted_rows': []}
@@ -55,6 +56,7 @@ class MapaTest(unittest.TestCase):
             self.assertEqual(salvo.iloc[1]['Poltrona'], '5')
             self.assertFalse(salvo.iloc[1]['Gerar crachá'])
             self.assertEqual(app.button(f'assento_{ident}_43_5').label, '05 ✓')
+            self.assertTrue(any('class="ocupante">Bruno Corrigido' in m.value for m in app.markdown))
             self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
             app.run()
             self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
