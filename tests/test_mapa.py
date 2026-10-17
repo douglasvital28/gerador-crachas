@@ -10,15 +10,16 @@ from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
-    def test_nome_curto_ignora_titulos_iniciais(self):
+    def test_nome_curto_preserva_titulo_sem_contar_como_nome(self):
         for nome in ['Min. Maria de Souza', 'Ministra Maria de Souza',
                      'Ministro Maria de Souza', 'Prof. Maria de Souza',
                      'Professora Maria de Souza', '  MIN.  Maria de Souza ',
                      'Min. Prof. Maria de Souza']:
             with self.subTest(nome=nome):
-                self.assertEqual(nome_curto(nome), 'Maria Souza')
-        self.assertEqual(nome_curto('Min. Maria'), 'Maria')
-        self.assertEqual(nome_curto('Min.'), '')
+                prefixo = ' '.join(nome.split()[:-3])
+                self.assertEqual(nome_curto(nome), prefixo + ' Maria Souza')
+        self.assertEqual(nome_curto('Min. Maria'), 'Min. Maria')
+        self.assertEqual(nome_curto('Min.'), 'Min.')
         self.assertEqual(nome_curto('Maria Min. Souza'), 'Maria Souza')
 
     def test_modelos_conforme_referencias(self):
