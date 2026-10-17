@@ -2,6 +2,7 @@
 from io import BytesIO
 from pathlib import Path
 import unicodedata
+import re
 import pandas as pd
 import pymupdf as fitz
 
@@ -21,6 +22,44 @@ COLUNAS = (
 def normalizar(valor):
     return ''.join(c for c in unicodedata.normalize('NFD', str(valor).strip().casefold())
                    if not unicodedata.combining(c))
+
+
+def separar_telefone(valor):
+    """Separa números brasileiros completos; preserva números ambíguos e serviços."""
+    original = str(valor).strip()
+    if not original or not re.fullmatch(r'[+\d\s().-]+', original):
+        return '', original
+    numero = re.sub(r'\D', '', original)
+    if numero.startswith(('0800', '0300', '0500', '0900')):
+        return '', original
+    if original.startswith('+'):
+        if not numero.startswith('55') or len(numero) not in (12, 13):
+            return '', original
+        numero = numero[2:]
+    elif numero.startswith('0055') and len(numero) in (14, 15):
+        numero = numero[4:]
+    elif numero.startswith('55') and len(numero) in (12, 13):
+        numero = numero[2:]
+    elif numero.startswith('0') and len(numero) in (11, 12):
+        numero = numero[1:]
+    if len(numero) not in (10, 11) or numero[0] == '0':
+        return '', original
+    return numero[:2], numero[2:]
+
+
+def avisos_duplicidades(df):
+    """Aponta possíveis repetições sem excluir ou alterar participantes."""
+    avisos = []
+    linhas = df.attrs.get('linhas_planilha', list(range(2, len(df) + 2)))
+    for coluna in ('Nome Completo', 'Poltrona'):
+        chaves = df[coluna].fillna('').map(lambda v: ' '.join(normalizar(v).split()))
+        if coluna == 'Poltrona':
+            chaves = chaves.map(lambda v: str(int(v)) if v.isdecimal() else v)
+        for chave in dict.fromkeys(chaves[chaves.ne('') & chaves.duplicated(keep=False)]):
+            posicoes = [i for i, v in enumerate(chaves) if v == chave]
+            avisos.append({'Campo': coluna, 'Valor': str(df.iloc[posicoes[0]][coluna]),
+                           'Linhas da planilha': ', '.join(str(linhas[i]) for i in posicoes)})
+    return avisos
 
 
 def validar_opcoes(df):
@@ -82,7 +121,9 @@ def ler_planilha(conteudo):
         raise ValueError('Preencha Nome Completo nas linhas: ' + ', '.join(str(i + 2) for i in sem_nome) + '.')
     if len(df) > MAX_PARTICIPANTES:
         raise ValueError(f'Gere até {MAX_PARTICIPANTES} participantes por vez. Divida a planilha em lotes menores.')
-    return validar_opcoes(df).reset_index(drop=True)
+    resultado = validar_opcoes(df).reset_index(drop=True)
+    resultado.attrs['linhas_planilha'] = [int(i) + 2 for i in df.index]
+    return resultado
 
 
 def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''):
@@ -106,6 +147,8 @@ def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''
                         doc.xref_set_key(parent, 'V', '/Off')
                 for i, (_, pessoa) in enumerate(df.iloc[inicio:inicio + 4].iterrows()):
                     sufixo = '' if i == 0 else f' {i+1}'
+                    ddd_plano, telefone_plano = separar_telefone(pessoa['Telefone do Plano'])
+                    ddd_contato, telefone_contato = separar_telefone(pessoa['Telefone Contato de Emergência'])
                     campos = {
                         f'NOME{sufixo}': pessoa['Nome Completo'],
                         f'IGREJA{sufixo}': pessoa['Unidade'],
@@ -116,9 +159,11 @@ def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''
                         f'DDD DO RESP{sufixo}': ddd,
                         f'TELEFONE DO RESPONSÁVEL{sufixo}': telefone,
                         f'CONVÊNIO MÉDICO{sufixo}': pessoa['Nome do Plano'],
-                        f'TELEFONE DO CONVÊNIO{sufixo}': pessoa['Telefone do Plano'],
+                        f'DDD Convenio{sufixo}': ddd_plano,
+                        f'TELEFONE DO CONVÊNIO{sufixo}': telefone_plano,
                         f'NOME DO CONTATO{sufixo}': pessoa['Nome Contato de Emergência'],
-                        f'TELEFONE DO CONTATO{sufixo}': pessoa['Telefone Contato de Emergência'],
+                        f'DDD Contato{sufixo}': ddd_contato,
+                        f'TELEFONE DO CONTATO{sufixo}': telefone_contato,
                     }
                     existentes = {w.field_name for w in widgets}
                     if campos.keys() - existentes:
