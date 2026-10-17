@@ -130,7 +130,7 @@ if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-aba_lista, aba_crachas = st.tabs(['Lista de embarque', 'Crachás'])
+aba_crachas, aba_lista = st.tabs(['Crachás', 'Lista de embarque'])
 with aba_lista:
     from conferencia import gerar_lista
     st.subheader('Lista de conferência para impressão')

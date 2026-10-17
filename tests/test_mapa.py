@@ -10,6 +10,30 @@ from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
+    def test_ld_44_e_identificacao_dos_passageiros(self):
+        filas = MAPAS[44]['Semi-leito']
+        self.assertEqual(filas[:3], [(1, 2, 4, 3), (5, 6, 'Escada', ''), (9, 10, 8, 7)])
+        self.assertEqual(filas[-2:], [(41, 42, 39, 40), (43, 44, 'Banheiro', '')])
+        self.assertEqual(sorted(n for fila in filas for n in fila if isinstance(n, int)), list(range(1, 45)))
+        linhas = [pessoa('Ana'), pessoa('Bruno')]
+        linhas[1][2] = ''
+        dados = excel(linhas)
+        ident = sha256(dados).hexdigest()
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            app.selectbox('mapa_modelo_' + ident).set_value(44).run()
+            self.assertFalse(app.exception)
+            opcoes = app.selectbox('mapa_passageiro_' + ident).options
+            self.assertIn('✓ Poltrona 001', opcoes[0])
+            self.assertIn('SEM POLTRONA', opcoes[1])
+            self.assertTrue(app.button('liberar_' + ident).disabled)
+            app.button(f'assento_{ident}_44_44').click().run()
+            self.assertIn('✓ Poltrona 44', app.selectbox('mapa_passageiro_' + ident).options[1])
+            self.assertFalse(app.button('liberar_' + ident).disabled)
+            app.button('liberar_' + ident).click().run()
+            self.assertIn('SEM POLTRONA', app.selectbox('mapa_passageiro_' + ident).options[1])
+            self.assertEqual([t.label for t in app.tabs if t.label in ('Crachás', 'Lista de embarque')], ['Crachás', 'Lista de embarque'])
+
     def test_misto_56_conforme_imagem(self):
         superior = MAPAS[56]['Piso superior']
         inferior = MAPAS[56]['Piso inferior']

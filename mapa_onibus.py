@@ -1,4 +1,4 @@
-"""Mapas dos leitos 43/46 e misto 56, conforme referências da caravana."""
+"""Mapas dos leitos 43/46, misto 56 e LD semi-leito 44, conforme referências da caravana."""
 import pandas as pd
 from html import escape
 
@@ -7,6 +7,11 @@ MAPAS = {
         'Piso superior': [(1, 2, 3), (4, 5, 'Escada'), (6, 7, 'Escada'),
                           *[(i, i+1, i+2) for i in range(8, 30, 3)]],
         'Piso inferior': [(i, i+1, i+2) for i in range(32, 42, 3)],
+    },
+    44: {
+        'Semi-leito': [(1, 2, 4, 3), (5, 6, 'Escada', ''),
+                       *[(i, i+1, i-1, i-2) for i in range(9, 38, 4)],
+                       (41, 42, 39, 40), (43, 44, 'Banheiro', '')],
     },
     46: {
         'Piso superior': [(1, 2, 3), (4, 5, 6), (7, 8, 'Escada'), (9, 10, 'Sem poltrona'),
@@ -77,9 +82,9 @@ def mostrar_mapa(tabela, identidade, titulo=None):
         st.subheader(titulo)
     st.caption('Escolha o passageiro e clique em um lugar livre. Para mudar de lugar, clique na nova poltrona.')
     st.caption('Organize um ônibus por planilha. Trocar o modelo não altera as poltronas já preenchidas.')
-    modelos = [43, 46, 56]
+    modelos = [43, 46, 56, 44]
     modelo = st.selectbox('Modelo do ônibus', modelos,
-                          format_func=lambda n: 'Misto · 56 lugares (semi-leito + leito)' if n == 56 else f'Leito · {n} lugares',
+                          format_func=lambda n: 'LD Semi-leito · 44 lugares' if n == 44 else 'Misto · 56 lugares (semi-leito + leito)' if n == 56 else f'Leito · {n} lugares',
                           index=2 if any(47 <= n <= 56 for n in ocupacao(tabela)) else (1 if any(44 <= n <= 46 for n in ocupacao(tabela)) else 0),
                           key='mapa_modelo_' + identidade)
     vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip()]
@@ -88,11 +93,14 @@ def mostrar_mapa(tabela, identidade, titulo=None):
         st.session_state[chave_passageiro] = vagas[0] if vagas else 0
     passageiro = st.selectbox('Passageiro para acomodar', list(range(len(tabela))),
                              index=None,
-                             format_func=lambda i: f'{i+1}. {tabela.iloc[i]["Nome Completo"]}',
+                             format_func=lambda i: f'{i+1}. {tabela.iloc[i]["Nome Completo"]} · ' + (f'✓ Poltrona {tabela.iloc[i]["Poltrona"]}' if str(tabela.iloc[i]['Poltrona']).strip() else '○ SEM POLTRONA'),
                              key=chave_passageiro)
     if passageiro is None:
         st.info('Selecione um passageiro para visualizar o mapa.')
         return
+    st.button('Liberar poltrona deste passageiro',
+              disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),
+              key='liberar_' + identidade, on_click=salvar, args=(passageiro, None, modelo))
     atual_passageiro = tabela.iloc[passageiro]
     st.caption(f'{atual_passageiro["Nome Completo"]} · Poltrona atual: {atual_passageiro["Poltrona"] or "a escolher"}')
     lugares = ocupacao(tabela)
@@ -126,10 +134,10 @@ def mostrar_mapa(tabela, identidade, titulo=None):
 </style>''', unsafe_allow_html=True)
         st.markdown('''<div style="text-align:center;padding:14px 0 20px;color:#245a65;letter-spacing:2px;font-size:11px;font-weight:700">
 FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-radius:30px 30px 7px 7px;background:linear-gradient(100deg,#b9e1e7,#e5f2f5,#b9e1e7)"></div></div>''', unsafe_allow_html=True)
-        pisos = st.tabs(['Piso superior · Semi-leito', 'Piso inferior · Leito'] if modelo == 56 else ['Piso superior', 'Piso inferior'])
+        pisos = st.tabs(['Piso superior · Semi-leito', 'Piso inferior · Leito'] if modelo == 56 else ['Semi-leito · LD 44'] if modelo == 44 else ['Piso superior', 'Piso inferior'])
         for (piso, filas), aba in zip(MAPAS[modelo].items(), pisos):
             with aba:
-                duplas = modelo == 56 and piso == 'Piso superior'
+                duplas = modelo == 44 or (modelo == 56 and piso == 'Piso superior')
                 st.caption('Semi-leito · 2 + 2 · duplas dos dois lados do corredor' if duplas else 'Leito · 2 + 1 · dupla à esquerda e individual à direita')
                 if modelo in (46, 56) and piso == 'Piso inferior':
                     st.caption('Frente deste piso: toalete à esquerda · escada à direita')
@@ -141,7 +149,7 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                         with coluna:
                             if isinstance(assento, str):
                                 if assento:
-                                    st.caption('↗ ' + assento if assento == 'Escada' else '—')
+                                    st.caption('↗ Escada' if assento == 'Escada' else 'WC Banheiro' if assento == 'Banheiro' else '—')
                                 continue
                             indices = lugares.get(assento, [])
                             atual = indices == [passageiro]
@@ -157,8 +165,5 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                             if indices:
                                 visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) for i in indices)
                                 st.markdown(f'<div class="ocupante">{visiveis}</div>', unsafe_allow_html=True)
-        st.caption('Superior: semi-leito 1–44 · Inferior: leito 45–56. Numeração conforme o G8 Misto enviado.' if modelo == 56 else 'Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
-    st.button('Liberar poltrona deste passageiro',
-              disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),
-              key='liberar_' + identidade, on_click=salvar, args=(passageiro, None, modelo))
+        st.caption('Superior: semi-leito 1–44 · Inferior: leito 45–56. Numeração conforme o G8 Misto enviado.' if modelo == 56 else 'LD Semi-leito · 44 lugares. Escada e banheiro conforme a referência enviada.' if modelo == 44 else 'Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
     st.caption('As escolhas ficam nesta sessão. Baixe a planilha com as correções para guardar as poltronas.')
