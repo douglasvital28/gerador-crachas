@@ -24,13 +24,17 @@ class MapaTest(unittest.TestCase):
             app.selectbox('mapa_modelo_' + ident).set_value(44).run()
             self.assertFalse(app.exception)
             opcoes = app.selectbox('mapa_passageiro_' + ident).options
+            self.assertTrue(opcoes[0].startswith('🟢 '))
+            self.assertTrue(opcoes[1].startswith('🟠 '))
             self.assertIn('✓ Poltrona 001', opcoes[0])
             self.assertIn('SEM POLTRONA', opcoes[1])
             self.assertTrue(app.button('liberar_' + ident).disabled)
             app.button(f'assento_{ident}_44_44').click().run()
+            self.assertTrue(app.selectbox('mapa_passageiro_' + ident).options[1].startswith('🟢 '))
             self.assertIn('✓ Poltrona 44', app.selectbox('mapa_passageiro_' + ident).options[1])
             self.assertFalse(app.button('liberar_' + ident).disabled)
             app.button('liberar_' + ident).click().run()
+            self.assertTrue(app.selectbox('mapa_passageiro_' + ident).options[1].startswith('🟠 '))
             self.assertIn('SEM POLTRONA', app.selectbox('mapa_passageiro_' + ident).options[1])
             self.assertEqual([t.label for t in app.tabs if t.label in ('Crachás', 'Lista de embarque')], ['Crachás', 'Lista de embarque'])
 
