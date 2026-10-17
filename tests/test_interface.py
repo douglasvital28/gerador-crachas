@@ -9,6 +9,36 @@ from test_geracao import excel, pessoa
 
 
 class SelecaoTest(unittest.TestCase):
+    def test_previa_navegavel_e_validacao(self):
+        linhas = [pessoa(f'Pessoa {i}') for i in range(5)]
+        for i, linha in enumerate(linhas):
+            linha[2] = str(i + 1)
+        dados = excel(linhas)
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            app.text_input[0].set_value('25:00').run()
+            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.error)
+            app.text_input[0].set_value('8:05')
+            app.text_input[4].set_value('(11) 91234-5678').run()
+            self.assertFalse(app.button[0].disabled)
+            app.button[0].click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.number_input[0].value, 1)
+            fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
+            self.assertEqual(fields['HORÁRIO DE RETORNO']['/V'], '08:05')
+            self.assertEqual(fields['DDD DO RESP']['/V'], '11')
+            self.assertEqual(fields['TELEFONE DO RESPONSÁVEL']['/V'], '912345678')
+            app.number_input[0].set_value(2).run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.number_input[0].value, 2)
+            self.assertIn('pdf', app.session_state)
+            self.assertFalse(app.warning)
+            app.text_input[0].set_value('9:00').run()
+            self.assertNotIn('pdf', app.session_state)
+            app.button[0].click().run()
+            self.assertEqual(app.number_input[0].value, 1)
+
     def test_duplicidades_avisam_sem_bloquear(self):
         dados = excel([pessoa(), pessoa()])
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
