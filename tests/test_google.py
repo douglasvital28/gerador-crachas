@@ -39,7 +39,7 @@ class GoogleTest(unittest.TestCase):
              patch('fonte_google.abas_planilha', return_value=['Respostas']), \
              patch('fonte_google.respostas_planilha', side_effect=lambda *args: valores):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
-            app.radio('origem_dados').set_value('Google Sheets (teste)').run()
+            app.radio('origem_dados').set_value('Google Sheets').run()
             app.text_input('gs_link').set_value('https://docs.google.com/spreadsheets/d/' + PLANILHA + '/edit').run()
             app.button('gs_abas').click().run()
             app.button('gs_buscar').click().run()
@@ -133,7 +133,7 @@ class GoogleTest(unittest.TestCase):
     def test_interface_sem_configuracao_preserva_excel(self):
         with patch('streamlit.secrets', {}):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
-            app.radio('origem_dados').set_value('Google Sheets (teste)').run()
+            app.radio('origem_dados').set_value('Google Sheets').run()
             self.assertFalse(app.exception)
             self.assertTrue(any('configurar' in i.value for i in app.info))
             self.assertFalse(any(b.key == 'gerar_crachas' for b in app.button))

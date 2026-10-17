@@ -1,4 +1,4 @@
-"""Interface experimental de importação Google, isolada por conta e sessão."""
+"""Interface de importação Google, isolada por conta e sessão."""
 from hashlib import sha256
 from io import BytesIO
 import json
@@ -16,7 +16,7 @@ def conectar_google():
     except (FileNotFoundError, KeyError):
         configurado = False
     if not configurado:
-        st.info('A conexão Google está em preparação. O administrador precisa configurar o projeto Google Cloud e os segredos do aplicativo de teste.')
+        st.info('A conexão Google está em preparação. O administrador precisa configurar o projeto Google Cloud e os segredos do aplicativo.')
         return None
     if not st.user.get('is_logged_in', False):
         st.caption('Conecte sua conta para ler uma planilha privada. O aplicativo não altera sua planilha Google.')
@@ -41,7 +41,7 @@ def conectar_google():
     if not token:
         st.error('A conta entrou, mas a autorização de leitura não está disponível. Confira expose_tokens e os escopos; depois saia e conecte novamente.')
         return None
-    st.info('Teste: as correções ficam nesta sessão. Baixe o Excel antes de sair. O cadastro permanente de viagens ainda não está disponível.')
+    st.info('As correções ficam nesta sessão. Baixe o Excel antes de sair. O cadastro permanente de viagens ainda não está disponível.')
     link = st.text_input('Link da planilha de respostas', key='gs_link', placeholder='https://docs.google.com/spreadsheets/d/...')
     try:
         planilha = id_planilha(link) if link.strip() else None

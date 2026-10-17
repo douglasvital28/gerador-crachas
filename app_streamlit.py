@@ -25,13 +25,13 @@ Mantenha os telefones como texto no Excel para preservar zeros à esquerda.
 Nos telefones do plano e do contato de emergência, informe o DDD junto ao número.
 **Telefone do plano iniciado por 0800:** informe o número completo, sem acrescentar DDD; o campo DDD ficará vazio no crachá.
 
-**Google Sheets (teste):** conecte sua conta Google e cole o link da **planilha de respostas** vinculada ao Forms.
+**Google Sheets:** conecte sua conta Google e cole o link da **planilha de respostas** vinculada ao Forms.
 Clique em **Ler abas da planilha**, selecione a aba e use **Buscar respostas no Google**.
 Associe as perguntas aos campos do sistema e escolha um **identificador único da inscrição**:
 use uma coluna estável e sem repetições, como o carimbo de data/hora, quando for único.
 Não use nome ou poltrona como identificador. Depois clique em **Importar / atualizar participantes**.
 Cada organizador usa sua própria conta, que precisa ter acesso à planilha.
-Se o Google bloquear a entrada durante o teste, solicite ao administrador a inclusão da conta como usuário de teste.
+Se o Google bloquear a entrada, entre em contato com o administrador para conferir as permissões da integração.
 O aplicativo apenas lê a planilha; as alterações feitas aqui não são enviadas ao Google.
 Para buscar novas inscrições, repita a busca e a atualização: as correções e poltronas da sessão são preservadas.
 Inscrições removidas na origem permanecem disponíveis para conferência.
@@ -93,9 +93,9 @@ st.download_button('📄 Baixar Planilha Modelo', (BASE / 'modelo_planilha.xlsx'
                    file_name='modelo_planilha.xlsx',
                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                    on_click='ignore')
-origem_dados = st.radio('Origem dos participantes', ['Planilha Excel', 'Google Sheets (teste)'],
+origem_dados = st.radio('Origem dos participantes', ['Planilha Excel', 'Google Sheets'],
                         horizontal=True, key='origem_dados')
-if origem_dados == 'Google Sheets (teste)':
+if origem_dados == 'Google Sheets':
     from fonte_google import conectar_google
     df_file = conectar_google()
 else:
@@ -143,7 +143,7 @@ if df_file:
             st.session_state[chave_revisao] = revisao_mapa + 1
             st.rerun()
         tabela_mapa = padronizada.copy(deep=True)
-        if origem_dados == 'Google Sheets (teste)':
+        if origem_dados == 'Google Sheets':
             from fonte_google import registrar_trabalho
             registrar_trabalho(tabela_mapa, identidade_planilha)
         mascara = df[coluna_selecao].fillna(False).astype(bool)
