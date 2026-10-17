@@ -40,6 +40,7 @@ except ValueError as exc:
     erro_caravana = str(exc)
     st.error(erro_caravana)
 conteudo = df_file.getvalue() if df_file else b''
+identidade_planilha = sha256(conteudo).hexdigest()
 df = None
 selecionados = None
 if df_file:
@@ -51,8 +52,11 @@ if df_file:
             coluna_selecao = '_' + coluna_selecao
         tabela = df.copy()
         tabela.insert(0, coluna_selecao, True)
+        tabela = st.session_state.get('mapa_tabela_' + identidade_planilha, tabela).copy(deep=True)
+        revisao_mapa = st.session_state.get('mapa_revisao_' + identidade_planilha, 0)
+        chave_editor = 'participantes_' + identidade_planilha + (f'_r{revisao_mapa}' if revisao_mapa else '')
         df = st.data_editor(
-            tabela, hide_index=True, key='participantes_' + sha256(conteudo).hexdigest(),
+            tabela, hide_index=True, key=chave_editor,
             disabled=[c for c in df.columns if c not in ('Nome Completo', 'Unidade', 'Poltrona',
                       'Nome do Plano', 'Telefone do Plano', 'Nome Contato de Emergência',
                       'Telefone Contato de Emergência', CONVENIO, CONTATO)],
@@ -64,6 +68,7 @@ if df_file:
                 options=['', *opcoes], required=False,
             ) for c, opcoes in OPCOES.items()}},
         )
+        tabela_mapa = df.copy(deep=True)
         mascara = df[coluna_selecao].fillna(False).astype(bool)
         df = validar_edicao(df.drop(columns=[coluna_selecao]))
         selecionados = df.loc[mascara].copy()
@@ -148,3 +153,7 @@ if df is not None:
 else:
     st.session_state.pop('lista_pdf', None)
     st.session_state.pop('assinatura_lista', None)
+
+if df is not None:
+    from mapa_onibus import mostrar_mapa
+    mostrar_mapa(tabela_mapa, identidade_planilha)

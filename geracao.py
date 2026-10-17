@@ -109,6 +109,8 @@ def ler_planilha(conteudo):
                             if normalizar(c) == normalizar(CONVENIO)})
     if df.columns.duplicated().any():
         raise ValueError('Existem colunas com nomes repetidos. Use a planilha modelo.')
+    if 'Poltrona' not in df:
+        df['Poltrona'] = ''
     faltantes = [c for c in COLUNAS if c not in df.columns]
     if faltantes:
         raise ValueError('Colunas não encontradas: ' + ', '.join(faltantes) + '. Use a planilha modelo.')

@@ -91,7 +91,7 @@ class SelecaoTest(unittest.TestCase):
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             self.assertFalse(app.exception)
-            self.assertEqual(len(app.warning), 1)
+            self.assertTrue(any('nomes ou poltronas repetidos' in w.value for w in app.warning))
             self.assertFalse(app.button[0].disabled)
             app.button[0].click().run()
             self.assertFalse(app.exception)
