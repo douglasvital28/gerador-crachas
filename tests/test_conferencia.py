@@ -13,6 +13,18 @@ from hashlib import sha256
 
 
 class ConferenciaTest(unittest.TestCase):
+    def test_cabecalho_caravanistas_com_responsavel_e_telefone(self):
+        dados = gerar_lista(ler_planilha(excel([pessoa('Ana')]*30)),
+                           data_viagem=date(2026, 11, 1), responsavel='MIN. MARIA SILVA',
+                           telefone_responsavel='(11) 99999-1234')
+        leitor = PdfReader(BytesIO(dados))
+        self.assertGreater(len(leitor.pages), 1)
+        for pagina in leitor.pages:
+            texto = pagina.extract_text()
+            for esperado in ['Lista de Caravanistas', 'Data de Saída da Caravana: 01/11/2026',
+                             'Total de passageiros: 30', 'MIN. MARIA SILVA', '(11) 99999-1234']:
+                self.assertIn(esperado, texto)
+
     def test_limite_400_e_campos_para_preenchimento_manual(self):
         df = ler_planilha(excel([pessoa(f'Passageiro {i:03d}') for i in range(1, 401)]))
         pdf = gerar_lista(df)
@@ -45,7 +57,7 @@ class ConferenciaTest(unittest.TestCase):
         self.assertGreater(len(reader.pages), 1)
         textos = [p.extract_text() for p in reader.pages]
         for texto in textos:
-            for esperado in ['Lista de conferência', '01/11/2026', '48', 'José da Silva', 'Observações', 'Retorno']:
+            for esperado in ['Lista de Caravanistas', '01/11/2026', '48', 'José da Silva', 'Observações', 'Retorno']:
                 self.assertIn(esperado, texto)
         texto = '\n'.join(textos)
         for i in range(1, 48):

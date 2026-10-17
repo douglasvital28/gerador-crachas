@@ -68,7 +68,7 @@ se não precisar desse contato, deixe ambos vazios.
 ### 5 · Gere e imprima os documentos
 - **Crachás:** clique em **Gerar Crachás**, confira as páginas na prévia e baixe o PDF. Nomes longos de participantes, contatos e responsável podem ter nomes do meio abreviados para caber, preservando prefixos, primeiro nome e último sobrenome. O nome completo permanece na planilha.
 - **Lista de embarque:** escolha os participantes e a ordem por missão e nome, nome ou poltrona.
-  Informe a data da viagem, se desejar, e gere a lista para impressão em A4, com espaços de conferência de ida, retorno e observações.
+  Informe a Data de Saída da Caravana, se desejar, e gere a Lista de Caravanistas, com o responsável e seu telefone no cabeçalho, para impressão em A4, com espaços de conferência de ida, retorno e observações.
 - **Mapa do ônibus:** baixe o PDF preenchido em A4, com nomes completos em negrito e uma página por piso.
   Passageiros sem poltrona aparecem em uma relação adicional.
   Corrija poltronas repetidas, inválidas ou fora do modelo antes de imprimir o mapa.
@@ -207,14 +207,15 @@ with aba_mapa:
         st.warning(str(exc))
 with aba_lista:
     from conferencia import gerar_lista
-    st.subheader('Lista de conferência para impressão')
+    st.subheader('Lista de Caravanistas para impressão')
     st.caption('Lista em A4 com nome, unidade, poltrona e espaços para ida, retorno e observações.')
     abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'], key='abrangencia_lista')
     ordem_lista = st.selectbox('Ordenar lista por', ['Missão e nome', 'Nome', 'Poltrona'], key='ordem_lista')
-    data_viagem = st.date_input('Data da viagem (opcional)', value=None, format='DD/MM/YYYY')
+    data_viagem = st.date_input('Data de Saída da Caravana (opcional)', value=None, format='DD/MM/YYYY')
     dados_lista = df if abrangencia == 'Todos os participantes' else selecionados
+    contato_lista = (f'({ddd_validado}) {telefone_validado}' if ddd_validado else '') if erro_caravana is None else ' '.join(p.strip() for p in (ddd, telefone) if p.strip())
     assinatura_lista = sha256(dados_lista.to_json().encode()
-                             + repr((ordem_lista, data_viagem, responsavel)).encode()).hexdigest()
+                             + repr((ordem_lista, data_viagem, responsavel, contato_lista)).encode()).hexdigest()
     if st.session_state.get('assinatura_lista') != assinatura_lista:
         st.session_state.pop('lista_pdf', None)
         st.session_state['assinatura_lista'] = assinatura_lista
@@ -222,7 +223,7 @@ with aba_lista:
     if st.button('Gerar lista de conferência', key='gerar_lista', disabled=dados_lista.empty):
         st.session_state.pop('lista_pdf', None)
         try:
-            st.session_state['lista_pdf'] = gerar_lista(dados_lista, ordem_lista, data_viagem, responsavel)
+            st.session_state['lista_pdf'] = gerar_lista(dados_lista, ordem_lista, data_viagem, responsavel, contato_lista)
         except ValueError as exc:
             st.error(str(exc))
         except Exception:

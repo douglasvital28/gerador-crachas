@@ -39,13 +39,15 @@ def ordenar_participantes(df, ordem):
     return df.iloc[sorted(range(len(df)), key=chave)].copy()
 
 
-def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
+def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_responsavel=''):
     if not 1 <= len(df) <= MAX_PARTICIPANTES:
         raise ValueError('Selecione entre 1 e 400 participantes para gerar a lista.')
     df = ordenar_participantes(df, ordem)
     estilo = ParagraphStyle('Celula', fontName='Helvetica', fontSize=9, leading=12)
     centro = ParagraphStyle('Centro', parent=estilo, alignment=TA_CENTER)
-    resp = Paragraph(escape(str(responsavel).strip()) or '________________________________________', estilo)
+    nome_resp = escape(str(responsavel).strip()) or '________________________________________'
+    contato = escape(str(telefone_responsavel).strip()) or '____________________'
+    resp = Paragraph(f'<b>{nome_resp}</b> · Telefone: {contato}', estilo)
     largura = A4[0] - 24 * mm
     _, altura_resp = resp.wrap(largura - 70, 1000)
     if altura_resp > 60:
@@ -53,7 +55,7 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
     output = BytesIO()
     doc = SimpleDocTemplate(output, pagesize=A4, leftMargin=12*mm, rightMargin=12*mm,
                             topMargin=75 + altura_resp, bottomMargin=36,
-                            title='Lista de conferência de passageiros', author='Gerador de Crachás')
+                            title='Lista de Caravanistas', author='Gerador de Crachás')
     larguras = [v * mm for v in (11, 53, 32, 13, 12, 16, 49)]
     dados = [['Nº', 'Nome', 'Unidade', 'Poltrona', 'Ida', 'Retorno', 'Observações']]
     alturas = [24]
@@ -85,10 +87,10 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
     def cabecalho(canvas, documento):
         canvas.saveState()
         canvas.setFont('Helvetica-Bold', 15)
-        canvas.drawString(12*mm, A4[1] - 30, 'Lista de conferência de passageiros')
+        canvas.drawString(12*mm, A4[1] - 30, 'Lista de Caravanistas')
         canvas.setFont('Helvetica', 9)
         data = data_viagem.strftime('%d/%m/%Y') if data_viagem else '____/____/________'
-        canvas.drawString(12*mm, A4[1] - 47, f'Data da viagem: {data}     Total de passageiros: {len(df)}')
+        canvas.drawString(12*mm, A4[1] - 47, f'Data de Saída da Caravana: {data}     Total de passageiros: {len(df)}')
         canvas.drawString(12*mm, A4[1] - 64, 'Responsável:')
         resp.drawOn(canvas, 12*mm + 70, A4[1] - 56 - altura_resp)
         canvas.setFont('Helvetica', 8)
