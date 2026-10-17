@@ -4,7 +4,7 @@ import pandas as pd
 import pymupdf
 from pypdf import PdfReader
 from pypdf.generic import NullObject
-from geracao import COLUNAS, CONVENIO, CONTATO, ler_planilha, gerar_pdf
+from geracao import COLUNAS, CONVENIO, CONTATO, ler_planilha, gerar_pdf, separar_telefone, avisos_duplicidades
 
 
 def excel(rows, columns=COLUNAS):
@@ -18,6 +18,57 @@ def pessoa(nome='Maria da Conceição Aparecida de Oliveira Santos'):
 
 
 class GeracaoTest(unittest.TestCase):
+    def test_separacao_telefones(self):
+        for valor, esperado in [
+            ('(11) 91234-5678', ('11', '912345678')),
+            ('1132345678', ('11', '32345678')),
+            ('011912345678', ('11', '912345678')),
+            ('+55 (21) 91234-5678', ('21', '912345678')),
+            ('005521912345678', ('21', '912345678')),
+            ('5521912345678', ('21', '912345678')),
+            ('', ('', '')), ('91234-5678', ('', '91234-5678')),
+            ('0800 123 4567', ('', '0800 123 4567')),
+            ('0300 123 4567', ('', '0300 123 4567')),
+            ('+1 212 555 0123', ('', '+1 212 555 0123')),
+            ('11 3234-5678 ramal 2', ('', '11 3234-5678 ramal 2')),
+        ]:
+            with self.subTest(valor=valor):
+                self.assertEqual(separar_telefone(valor), esperado)
+
+    def test_duplicidades_e_linhas_originais(self):
+        linhas = [pessoa('José  Silva'), [''] * len(COLUNAS), pessoa('JOSE SILVA'), pessoa('Outro')]
+        linhas[0][2] = '001'
+        linhas[2][2] = '1'
+        linhas[3][2] = ''
+        df = ler_planilha(excel(linhas))
+        avisos = avisos_duplicidades(df)
+        self.assertEqual(len(avisos), 2)
+        self.assertTrue(all(a['Linhas da planilha'] == '2, 4' for a in avisos))
+        self.assertEqual(len(df), 3)
+        self.assertEqual(df.iloc[0]['Poltrona'], '001')
+        self.assertEqual(avisos_duplicidades(ler_planilha(excel([pessoa()]))), [])
+
+    def test_ddd_pdf_todas_posicoes(self):
+        linhas = []
+        for i in range(5):
+            p = pessoa(f'Pessoa {i}')
+            p[4], p[6] = '(21) 3234-5678', '+55 (11) 91234-5678'
+            linhas.append(p)
+        pdf = gerar_pdf(ler_planilha(excel(linhas)))
+        with pymupdf.open(stream=pdf, filetype='pdf') as doc:
+            for pagina, page in enumerate(doc):
+                valores = [(w.field_name, w.field_value) for w in page.widgets()]
+                for prefixo, esperado in [('DDD Convenio', '21'), ('DDD Contato', '11'),
+                                         ('TELEFONE DO CONVÊNIO', '32345678'),
+                                         ('TELEFONE DO CONTATO', '912345678')]:
+                    campos = [(n, v) for n, v in valores if n.startswith(prefixo)]
+                    self.assertEqual(len(campos), 4)
+                    self.assertEqual(sum(v == esperado for _, v in campos), 4 if pagina == 0 else 1)
+            from pathlib import Path
+            Path('tmp/pdfs').mkdir(parents=True, exist_ok=True)
+            Path('tmp/pdfs/telefones.pdf').write_bytes(pdf)
+            doc[0].get_pixmap().save('tmp/pdfs/telefones.png')
+
     def test_opcoes_normalizadas_e_invalidas(self):
         df = ler_planilha(excel([pessoa() + [' nAO ', ' FAMILIAR ']],
                                 [*COLUNAS, 'Possui Plano de Saúde?', CONTATO]))

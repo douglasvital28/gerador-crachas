@@ -25,6 +25,10 @@ No Streamlit Community Cloud, selecione `app_streamlit.py` como arquivo principa
 
 Os campos opcionais podem ficar vazios. A fonte é reduzida para acomodar textos maiores; se ficar pequena demais para leitura, o aplicativo solicita abreviar o conteúdo. As colunas `Possuí Plano de Saúde?` (Sim/Não) e `Tipo de Contato` (Familiar/Amigo) preenchem automaticamente as marcações do PDF. Você também pode selecionar essas opções na tabela do aplicativo antes de gerar. Valores em branco deixam as opções desmarcadas; valores inválidos indicam a linha da planilha a corrigir. Maiúsculas/minúsculas e acentos são normalizados. Planilhas antigas sem essas duas colunas continuam funcionando: faça as escolhas na tabela.
 
+Nos telefones do plano e do contato de emergência, números brasileiros completos são separados entre DDD e telefone no PDF: `(11) 91234-5678` vira DDD `11` e telefone `912345678`. Também são reconhecidos prefixos `+55`, `0055`, `55` e um zero antes do DDD, com comprimento compatível. Números locais, serviços 0800/0300/0500/0900, números de outros países e formatos com ramal são preservados sem separação. A identificação por formato não verifica se a linha telefônica existe.
+
+O aplicativo avisa sobre nomes repetidos (ignorando acentos, caixa e espaços extras) e poltronas repetidas (tratando `001` e `1` como a mesma poltrona). O aviso mostra as linhas originais da planilha, inclusive quando há linhas vazias no meio, e não bloqueia a geração nem remove participantes. Confira a origem antes de corrigir possíveis homônimos ou números de poltrona repetidos entre ônibus.
+
 O PDF é gerado em memória, sem arquivos temporários no servidor, e fica disponível na sessão do usuário. Alterar a planilha, as seleções da tabela ou os dados da caravana remove o resultado anterior para evitar baixar um PDF desatualizado. Recarregar a página pode encerrar a sessão; baixe o arquivo para guardá-lo. O limite de participantes é uma proteção inicial, não uma garantia de capacidade sob muitos acessos simultâneos.
 
 ## Testes

@@ -1,7 +1,7 @@
 import logging
 from hashlib import sha256
 import streamlit as st
-from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf
+from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf, avisos_duplicidades
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
@@ -18,6 +18,8 @@ st.markdown(f'''
 
 Até **{MAX_PARTICIPANTES} participantes** e **5 MB** por planilha. Campos opcionais podem ficar vazios.
 Preencha telefones como texto no Excel para preservar zeros à esquerda.
+Nos telefones do plano e do contato, informe o DDD junto ao número: ele será separado no crachá.
+Números locais, serviços como 0800 e formatos não reconhecidos serão mantidos como informados.
 Preencha **Possuí Plano de Saúde?** com Sim/Não e **Tipo de Contato** com Familiar/Amigo.
 Você também pode selecionar essas opções na tabela abaixo. Em branco significa sem marcação.
 ''')
@@ -32,6 +34,11 @@ df = None
 if df_file:
     try:
         df = ler_planilha(conteudo)
+        duplicidades = avisos_duplicidades(df)
+        if duplicidades:
+            st.warning('Há nomes ou poltronas repetidos. Confira as linhas indicadas na planilha. '
+                       'O aviso não impede a geração: nomes iguais podem ser de pessoas diferentes.')
+            st.dataframe(duplicidades, hide_index=True)
         st.caption(f'{len(df)} participantes · {(len(df) + 3) // 4} páginas de crachás')
         st.caption('Selecione as opções de convênio e tipo de contato para cada participante.')
         df = st.data_editor(

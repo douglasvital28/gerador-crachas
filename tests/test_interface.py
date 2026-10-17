@@ -9,6 +9,17 @@ from test_geracao import excel, pessoa
 
 
 class SelecaoTest(unittest.TestCase):
+    def test_duplicidades_avisam_sem_bloquear(self):
+        dados = excel([pessoa(), pessoa()])
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            self.assertEqual(len(app.warning), 1)
+            self.assertFalse(app.button[0].disabled)
+            app.button[0].click().run()
+            self.assertFalse(app.exception)
+            self.assertIn('pdf', app.session_state)
+
     def test_editar_gerar_e_invalidar_pdf(self):
         dados = excel([pessoa()])
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
