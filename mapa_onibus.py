@@ -1,4 +1,4 @@
-"""Mapas dos leitos de 43 e 46 lugares, conforme referências da caravana."""
+"""Mapas dos leitos 43/46 e misto 56, conforme referências da caravana."""
 import pandas as pd
 from html import escape
 
@@ -12,6 +12,13 @@ MAPAS = {
         'Piso superior': [(1, 2, 3), (4, 5, 6), (7, 8, 'Escada'), (9, 10, 'Sem poltrona'),
                           *[(i, i+1, i+2) for i in range(11, 33, 3)]],
         'Piso inferior': [(i, i+1, i+2) for i in range(35, 45, 3)],
+    },
+    56: {
+        # Frente no topo: janela esquerda, corredor e janela direita.
+        'Piso superior': [(1, 2, 4, 3), (5, 6, 8, 7),
+                          (9, 10, 'Escada', ''), (11, 12, 'Escada', ''),
+                          *[(i, i+1, i+3, i+2) for i in range(13, 42, 4)]],
+        'Piso inferior': [(i, i+1, i+2) for i in range(45, 55, 3)],
     },
 }
 
@@ -70,8 +77,10 @@ def mostrar_mapa(tabela, identidade, titulo=None):
         st.subheader(titulo)
     st.caption('Escolha o passageiro e clique em um lugar livre. Para mudar de lugar, clique na nova poltrona.')
     st.caption('Organize um ônibus por planilha. Trocar o modelo não altera as poltronas já preenchidas.')
-    modelo = st.selectbox('Modelo do ônibus', [43, 46], format_func=lambda n: f'Leito · {n} lugares',
-                          index=1 if any(44 <= n <= 46 for n in ocupacao(tabela)) else 0,
+    modelos = [43, 46, 56]
+    modelo = st.selectbox('Modelo do ônibus', modelos,
+                          format_func=lambda n: 'Misto · 56 lugares (semi-leito + leito)' if n == 56 else f'Leito · {n} lugares',
+                          index=2 if any(47 <= n <= 56 for n in ocupacao(tabela)) else (1 if any(44 <= n <= 46 for n in ocupacao(tabela)) else 0),
                           key='mapa_modelo_' + identidade)
     vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip()]
     chave_passageiro = 'mapa_passageiro_' + identidade
@@ -117,20 +126,22 @@ def mostrar_mapa(tabela, identidade, titulo=None):
 </style>''', unsafe_allow_html=True)
         st.markdown('''<div style="text-align:center;padding:14px 0 20px;color:#245a65;letter-spacing:2px;font-size:11px;font-weight:700">
 FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-radius:30px 30px 7px 7px;background:linear-gradient(100deg,#b9e1e7,#e5f2f5,#b9e1e7)"></div></div>''', unsafe_allow_html=True)
-        pisos = st.tabs(['Piso superior', 'Piso inferior'])
+        pisos = st.tabs(['Piso superior · Semi-leito', 'Piso inferior · Leito'] if modelo == 56 else ['Piso superior', 'Piso inferior'])
         for (piso, filas), aba in zip(MAPAS[modelo].items(), pisos):
             with aba:
-                st.caption('Janela · corredor à direita da dupla · janela')
-                if modelo == 46 and piso == 'Piso inferior':
+                duplas = modelo == 56 and piso == 'Piso superior'
+                st.caption('Semi-leito · 2 + 2 · duplas dos dois lados do corredor' if duplas else 'Leito · 2 + 1 · dupla à esquerda e individual à direita')
+                if modelo in (46, 56) and piso == 'Piso inferior':
                     st.caption('Frente deste piso: toalete à esquerda · escada à direita')
                 for fila in filas:
-                    colunas = st.columns([1, 1, .3, 1])
+                    colunas = st.columns([1, 1, .3, 1, 1] if duplas else [1, 1, .3, 1])
                     with colunas[2]:
                         st.markdown('<div style="text-align:center;color:#c4d4d9;padding-top:12px">┆</div>', unsafe_allow_html=True)
-                    for assento, coluna in zip(fila, (colunas[0], colunas[1], colunas[3])):
+                    for assento, coluna in zip(fila, [*colunas[:2], *colunas[3:]]):
                         with coluna:
                             if isinstance(assento, str):
-                                st.caption('↗ ' + assento if assento == 'Escada' else '—')
+                                if assento:
+                                    st.caption('↗ ' + assento if assento == 'Escada' else '—')
                                 continue
                             indices = lugares.get(assento, [])
                             atual = indices == [passageiro]
@@ -146,7 +157,7 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                             if indices:
                                 visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) for i in indices)
                                 st.markdown(f'<div class="ocupante">{visiveis}</div>', unsafe_allow_html=True)
-        st.caption('Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
+        st.caption('Superior: semi-leito 1–44 · Inferior: leito 45–56. Numeração conforme o G8 Misto enviado.' if modelo == 56 else 'Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
     st.button('Liberar poltrona deste passageiro',
               disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),
               key='liberar_' + identidade, on_click=salvar, args=(passageiro, None, modelo))

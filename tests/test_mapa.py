@@ -10,6 +10,34 @@ from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
+    def test_misto_56_conforme_imagem(self):
+        superior = MAPAS[56]['Piso superior']
+        inferior = MAPAS[56]['Piso inferior']
+        self.assertEqual(superior[:4], [(1, 2, 4, 3), (5, 6, 8, 7),
+                                       (9, 10, 'Escada', ''), (11, 12, 'Escada', '')])
+        self.assertEqual(superior[-1], (41, 42, 44, 43))
+        self.assertEqual(sorted(n for fila in superior for n in fila if isinstance(n, int)), list(range(1, 45)))
+        self.assertEqual(inferior, [(45, 46, 47), (48, 49, 50), (51, 52, 53), (54, 55, 56)])
+
+    def test_misto_atribuicao_nos_dois_pisos(self):
+        linhas = [pessoa('Ana'), pessoa('Bruno')]
+        linhas[0][2] = linhas[1][2] = ''
+        dados = excel(linhas)
+        ident = sha256(dados).hexdigest()
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            app.selectbox('mapa_modelo_' + ident).set_value(56).run()
+            app.button(f'assento_{ident}_56_44').click().run()
+            self.assertFalse(app.exception)
+            app.selectbox('mapa_passageiro_' + ident).set_value(1).run()
+            app.button(f'assento_{ident}_56_56').click().run()
+            self.assertFalse(app.exception)
+            app.button('gerar_crachas').click().run()
+            campos = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
+            self.assertEqual(campos['POLTRONA']['/V'], '44')
+            self.assertEqual(campos['POLTRONA 2']['/V'], '56')
+            self.assertTrue(app.button(f'assento_{ident}_56_44').disabled)
+
     def test_nome_curto_preserva_titulo_sem_contar_como_nome(self):
         for nome in ['Min. Maria de Souza', 'Ministra Maria de Souza',
                      'Ministro Maria de Souza', 'Prof. Maria de Souza',
