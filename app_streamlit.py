@@ -40,19 +40,24 @@ except ValueError as exc:
     erro_caravana = str(exc)
     st.error(erro_caravana)
 conteudo = df_file.getvalue() if df_file else b''
+identidade_planilha = sha256(conteudo).hexdigest()
 df = None
 selecionados = None
 if df_file:
     try:
         df = ler_planilha(conteudo)
+        area_mapa = st.container()
         st.caption('Corrija os dados diretamente na tabela. Desmarque Gerar crachá para quem não precisa de impressão.')
         coluna_selecao = 'Gerar crachá'
         while coluna_selecao in df.columns:
             coluna_selecao = '_' + coluna_selecao
         tabela = df.copy()
         tabela.insert(0, coluna_selecao, True)
+        tabela = st.session_state.get('mapa_tabela_' + identidade_planilha, tabela).copy(deep=True)
+        revisao_mapa = st.session_state.get('mapa_revisao_' + identidade_planilha, 0)
+        chave_editor = 'participantes_' + identidade_planilha + (f'_r{revisao_mapa}' if revisao_mapa else '')
         df = st.data_editor(
-            tabela, hide_index=True, key='participantes_' + sha256(conteudo).hexdigest(),
+            tabela, hide_index=True, key=chave_editor,
             disabled=[c for c in df.columns if c not in ('Nome Completo', 'Unidade', 'Poltrona',
                       'Nome do Plano', 'Telefone do Plano', 'Nome Contato de Emergência',
                       'Telefone Contato de Emergência', CONVENIO, CONTATO)],
@@ -64,6 +69,7 @@ if df_file:
                 options=['', *opcoes], required=False,
             ) for c, opcoes in OPCOES.items()}},
         )
+        tabela_mapa = df.copy(deep=True)
         mascara = df[coluna_selecao].fillna(False).astype(bool)
         df = validar_edicao(df.drop(columns=[coluna_selecao]))
         selecionados = df.loc[mascara].copy()
@@ -92,7 +98,7 @@ if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-if st.button('⚙️ Gerar Crachás', disabled=selecionados is None or selecionados.empty or erro_caravana is not None):
+if st.button('⚙️ Gerar Crachás', key='gerar_crachas', disabled=selecionados is None or selecionados.empty or erro_caravana is not None):
     st.session_state.pop('pdf', None)
     try:
         with st.spinner('Gerando crachás…'):
@@ -123,8 +129,8 @@ if df is not None:
     from conferencia import gerar_lista
     st.subheader('Lista de conferência para impressão')
     st.caption('Lista em A4 com nome, unidade, poltrona e espaços para ida, retorno e observações.')
-    abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'])
-    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'])
+    abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'], key='abrangencia_lista')
+    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'], key='ordem_lista')
     data_viagem = st.date_input('Data da viagem (opcional)', value=None, format='DD/MM/YYYY')
     dados_lista = df if abrangencia == 'Todos os participantes' else selecionados
     assinatura_lista = sha256(dados_lista.to_json().encode()
@@ -133,7 +139,7 @@ if df is not None:
         st.session_state.pop('lista_pdf', None)
         st.session_state['assinatura_lista'] = assinatura_lista
     st.caption(f'{len(dados_lista)} participantes na lista. Responsável: {responsavel.strip() or "preenchimento à mão"}.')
-    if st.button('Gerar lista de conferência', disabled=dados_lista.empty):
+    if st.button('Gerar lista de conferência', key='gerar_lista', disabled=dados_lista.empty):
         st.session_state.pop('lista_pdf', None)
         try:
             st.session_state['lista_pdf'] = gerar_lista(dados_lista, ordem_lista, data_viagem, responsavel)
@@ -148,3 +154,8 @@ if df is not None:
 else:
     st.session_state.pop('lista_pdf', None)
     st.session_state.pop('assinatura_lista', None)
+
+if df is not None:
+    from mapa_onibus import mostrar_mapa
+    with area_mapa:
+        mostrar_mapa(tabela_mapa, identidade_planilha)

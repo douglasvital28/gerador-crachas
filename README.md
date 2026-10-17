@@ -52,3 +52,13 @@ Após enviar e corrigir os participantes, use **Lista de conferência para impre
 Clique em **Gerar lista de conferência** e depois **Baixar lista de conferência**. O PDF é A4, com nome, unidade, poltrona, quadrados para ida/retorno e espaço para observações. Cabeçalho, total de passageiros e títulos das colunas são repetidos nas páginas. Poltronas são ordenadas naturalmente (1, 2, 10); poltronas vazias ficam no final.
 
 A lista usa os dados corrigidos na tabela e pode ser gerada sem gerar os crachás. Não contém telefones nem informações de convênio. Mudar os dados incluídos, responsável, ordenação ou data remove o download anterior para evitar uma lista desatualizada. A lista é destinada ao controle manual no papel: as marcações feitas na impressão não são salvas no aplicativo.
+
+## Mapa clicável de poltronas
+
+A seção **Escolha de poltronas**, antes da tabela de passageiros, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
+
+As abas alternam entre os pisos. Um número livre pode ser escolhido; `×` indica ocupação e `✓` a poltrona do passageiro atual. Lugares ocupados mostram o primeiro nome e o último sobrenome abaixo do número. O nome completo continua disponível na ajuda ao passar sobre a poltrona. Lugares de outros passageiros ficam indisponíveis. Clicar em outro lugar livre move o passageiro e libera o anterior; **Liberar poltrona deste passageiro** remove somente a atribuição dele.
+
+Poltronas importadas são preservadas, e `001` é reconhecida como 1. Duplicidades e números fora do modelo geram avisos, sem apagar os dados. Trocar de modelo não renumera nem remove lugares. Arquivos sem a coluna Poltrona também são aceitos: o campo é criado vazio para preencher pelo mapa ou tabela.
+
+O mapa mantém as outras correções e a seleção de impressão da tabela. Atribuições aparecem nos crachás, lista de conferência e planilha exportada; resultados anteriores são invalidados quando os dados mudam. As escolhas ficam na sessão individual e não são sincronizadas com outros usuários. Baixe a planilha com as escolhas para guardá-las.
