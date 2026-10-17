@@ -17,6 +17,7 @@ A coluna opcional **Missão** acrescenta **MIN.** para Ministro(a) e **PROF.** p
 A coluna de poltrona pode ficar vazia: os assentos podem ser escolhidos no sistema.
 Mantenha os telefones como texto no Excel para preservar zeros à esquerda.
 Nos telefones do plano e do contato de emergência, informe o DDD junto ao número.
+**Telefone do plano iniciado por 0800:** informe o número completo, sem acrescentar DDD; o campo DDD ficará vazio no crachá.
 
 **Google Sheets (teste):** conecte sua conta Google e cole o link da **planilha de respostas** vinculada ao Forms.
 Clique em **Ler abas da planilha**, selecione a aba e use **Buscar respostas no Google**.

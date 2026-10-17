@@ -18,6 +18,18 @@ def pessoa(nome='Maria da Conceição Aparecida de Oliveira Santos'):
 
 
 class GeracaoTest(unittest.TestCase):
+    def test_plano_0800_sem_ddd_no_pdf(self):
+        valores = ['08001234567', '0800 123 4567', '0800-123-4567', '(0800) 123-4567']
+        linhas = [pessoa('Pessoa ' + str(i)) for i in range(4)]
+        for linha, telefone in zip(linhas, valores):
+            linha[COLUNAS.index('Telefone do Plano')] = telefone
+        pdf = gerar_pdf(ler_planilha(excel(linhas)))
+        campos = PdfReader(BytesIO(pdf)).get_fields()
+        for i, telefone in enumerate(valores):
+            sufixo = '' if i == 0 else f' {i+1}'
+            self.assertEqual(campos['DDD Convenio' + sufixo].get('/V', ''), '')
+            self.assertEqual(campos['TELEFONE DO CONVÊNIO' + sufixo]['/V'], telefone)
+
     def test_separacao_telefones(self):
         for valor, esperado in [
             ('(11) 91234-5678', ('11', '912345678')),
