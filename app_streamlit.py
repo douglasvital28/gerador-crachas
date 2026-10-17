@@ -9,12 +9,73 @@ from padronizacao import maiusculas_participantes
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
 st.caption('Importe os participantes, confira os dados, escolha os assentos e prepare os documentos da viagem.')
-with st.expander('Como usar e limites de importação'):
-    st.markdown(f'''Até **{MAX_PARTICIPANTES} participantes** e **5 MB** por planilha.
-Os dados dos participantes serão padronizados em **MAIÚSCULAS**.
+with st.expander('Como usar o sistema · passo a passo'):
+    st.markdown(f'''### 1 · Importe os participantes
+**Excel:** baixe a **Planilha Modelo**, preencha e envie o arquivo `.xlsx`.
+O limite é de **{MAX_PARTICIPANTES} participantes** e **5 MB** por arquivo.
+A coluna de poltrona pode ficar vazia: os assentos podem ser escolhidos no sistema.
 Mantenha os telefones como texto no Excel para preservar zeros à esquerda.
-Nos telefones do plano e do contato, informe o DDD junto ao número.
-Convênio: SIM/NÃO. Tipo de contato: FAMILIAR/AMIGO. Campos opcionais podem ficar vazios.''')
+Nos telefones do plano e do contato de emergência, informe o DDD junto ao número.
+
+**Google Sheets (teste):** conecte sua conta Google e cole o link da **planilha de respostas** vinculada ao Forms.
+Clique em **Ler abas da planilha**, selecione a aba e use **Buscar respostas no Google**.
+Associe as perguntas aos campos do sistema e escolha um **identificador único da inscrição**:
+use uma coluna estável e sem repetições, como o carimbo de data/hora, quando for único.
+Não use nome ou poltrona como identificador. Depois clique em **Importar / atualizar participantes**.
+Cada organizador usa sua própria conta, que precisa ter acesso à planilha.
+Se o Google bloquear a entrada durante o teste, solicite ao administrador a inclusão da conta como usuário de teste.
+O aplicativo apenas lê a planilha; as alterações feitas aqui não são enviadas ao Google.
+Para buscar novas inscrições, repita a busca e a atualização: as correções e poltronas da sessão são preservadas.
+Inscrições removidas na origem permanecem disponíveis para conferência.
+
+### 2 · Confira e corrija a listagem
+Revise os nomes, unidades, telefones, convênios, contatos e poltronas diretamente na tabela.
+Os dados dos participantes são padronizados em **MAIÚSCULAS**, inclusive após correções.
+Convênio aceita **SIM / NÃO**; tipo de contato aceita **FAMILIAR / AMIGO**.
+Campos opcionais podem ficar vazios; **NÃO INFORMADO** significa que não haverá marcação no crachá.
+Confira os avisos de nomes e poltronas repetidos antes de continuar.
+
+A coluna **Gerar crachá** controla quem terá crachá impresso.
+A lista de embarque permite escolher todos ou apenas os selecionados; o mapa impresso inclui todos.
+
+### 3 · Escolha ou revise os assentos
+Organize **um ônibus por planilha** e confirme o modelo:
+
+- **Leito 43:** piso superior 1–31 e inferior 32–43.
+- **Leito 46:** piso superior 1–34 e inferior 35–46.
+- **Misto 56:** semi-leito no superior 1–44 e leito no inferior 45–56.
+- **LD Semi-leito 44:** 44 lugares, com escada e banheiro conforme o mapa do modelo.
+
+Se todos já vierem com poltrona, responda **Deseja revisar os assentos importados?**
+Escolha **Não** para manter as poltronas e ocultar a marcação, ou **Sim** para abrir o mapa.
+Se houver passageiros sem assento, o mapa permanece disponível.
+Trocar o modelo não apaga nem redistribui as poltronas existentes.
+
+Na seleção de passageiros, **🟢** indica quem já tem poltrona e **🟠** quem ainda precisa de assento.
+Escolha um passageiro e clique em uma poltrona livre; para mudar de lugar, clique em outra livre.
+O botão **Liberar poltrona deste passageiro**, logo abaixo da seleção, remove a marcação atual.
+No mapa, **×** indica ocupação e **✓** indica a poltrona do passageiro selecionado.
+Os nomes aparecem abaixo dos assentos, com os prefixos preservados.
+
+### 4 · Informe os dados do ônibus
+Preencha plataforma, horário de retorno, responsável e telefone com DDD.
+Use o horário no formato **HH:MM**. Para informar telefone do responsável, preencha DDD e número;
+se não precisar desse contato, deixe ambos vazios.
+
+### 5 · Gere e imprima os documentos
+- **Crachás:** clique em **Gerar Crachás**, confira as páginas na prévia e baixe o PDF.
+- **Lista de embarque:** escolha os participantes e a ordem por nome ou poltrona.
+  Informe a data da viagem, se desejar, e gere a lista para impressão em A4, com espaços de conferência de ida, retorno e observações.
+- **Mapa do ônibus:** baixe o PDF preenchido em A4, com nomes completos em negrito e uma página por piso.
+  Passageiros sem poltrona aparecem em uma relação adicional.
+  Corrija poltronas repetidas, inválidas ou fora do modelo antes de imprimir o mapa.
+
+### Guarde suas escolhas antes de sair
+Use **Baixar planilha com minhas escolhas** para guardar as correções, seleções e poltronas,
+inclusive dos passageiros desmarcados para crachá. Você pode importar esse Excel depois para continuar.
+**As escolhas ficam nesta sessão; não há um cadastro permanente de viagens.**
+Os dados do ônibus da etapa 4 não fazem parte do Excel exportado e precisam ser preenchidos novamente.
+Após alterar dados, gere novamente os documentos afetados para imprimir a versão atual.''')
 st.subheader('1 · Importar participantes')
 st.download_button('📄 Baixar Planilha Modelo', (BASE / 'modelo_planilha.xlsx').read_bytes(),
                    file_name='modelo_planilha.xlsx',
