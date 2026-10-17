@@ -95,7 +95,7 @@ Na etapa 5, a aba **Mapa do ônibus** permite baixar o mapa em PDF A4, com nomes
 
 ### Ordem da listagem
 
-A conferência, a seleção de passageiros e a exportação seguem missão e nome: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez. Dentro de cada categoria, os nomes ficam em ordem alfabética, sem considerar prefixos ou acentos na comparação. A coluna opcional Missão/Missao identifica a categoria; prefixos MIN. e PROF. são usados quando a missão não é reconhecida. Demais missões e campos vazios ficam ao final. Poltronas, identificadores e seleção de crachás acompanham cada passageiro. Na lista impressa, Missão e nome é a ordem padrão; Nome e Poltrona continuam disponíveis.
+A conferência, a seleção de passageiros e a exportação seguem missão e nome: Ministros, Professores, Coordenadores, Assistentes de Ministros, Responsáveis de Setor, Assistentes de Família, Membros, Frequentadores e Primeira Vez. Dentro de cada categoria, os nomes ficam em ordem alfabética, sem considerar prefixos ou acentos na comparação. A coluna opcional Missão/Missao identifica a categoria; prefixos MIN. e PROF. são usados quando a missão não é reconhecida. Demais missões e campos vazios ficam ao final. Poltronas, identificadores e seleção de crachás acompanham cada passageiro. Na lista impressa, Missão e nome é a ordem padrão; Nome e Poltrona continuam disponíveis.
 
 ### Passageiros somente de ida ou de volta
 

@@ -26,6 +26,7 @@ def ordenar_por_missao(df):
         ('professor', 'professora', 'professores', 'professoras'),
         ('coordenador', 'coordenadora', 'coordenadores', 'coordenadoras'),
         ('assistente de ministro', 'assistente de ministra', 'assistentes de ministros', 'assistente de ministros', 'assistentes de ministro'),
+        ('responsavel de setor', 'responsaveis de setor', 'responsavel do setor', 'responsaveis do setor'),
         ('assistente de familia', 'assistentes de familia'),
         ('membro', 'membros'),
         ('frequentador', 'frequentadora', 'frequentadores', 'frequentadoras'),

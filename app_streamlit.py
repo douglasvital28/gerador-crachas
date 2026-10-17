@@ -37,7 +37,7 @@ Para buscar novas inscrições, repita a busca e a atualização: as correções
 Inscrições removidas na origem permanecem disponíveis para conferência.
 
 ### 2 · Confira e corrija a listagem
-A listagem é organizada por missão: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez, em ordem alfabética dentro de cada categoria. Missões não reconhecidas ou vazias ficam ao final; prefixos MIN. e PROF. identificam essas categorias quando a missão não é reconhecida.
+A listagem é organizada por missão: Ministros, Professores, Coordenadores, Assistentes de Ministros, Responsáveis de Setor, Assistentes de Família, Membros, Frequentadores e Primeira Vez, em ordem alfabética dentro de cada categoria. Missões não reconhecidas ou vazias ficam ao final; prefixos MIN. e PROF. identificam essas categorias quando a missão não é reconhecida.
 Revise os nomes, unidades, telefones, convênios, contatos e poltronas diretamente na tabela.
 Os dados dos participantes são padronizados em **MAIÚSCULAS**, inclusive após correções.
 Convênio aceita **SIM / NÃO**; tipo de contato aceita **FAMILIAR / AMIGO**.
