@@ -44,3 +44,11 @@ python -m unittest discover -s tests -v
 ```
 
 Os testes verificam validação, zeros à esquerda, textos grandes, quantidades de 1, 4 e 5 participantes, campos do formulário e preservação de valores entre páginas. Também verificam todas as combinações de marcação nos quatro crachás, em múltiplas páginas, crachás vazios, validação das opções e seleção pela interface. Utilizam dados fictícios.
+
+## Lista de conferência em papel
+
+Após enviar e corrigir os participantes, use **Lista de conferência para impressão**. Escolha todos os participantes ou apenas os marcados na coluna Gerar crachá, ordene por nome ou poltrona e informe a data da viagem se desejar. O nome do responsável vem do campo da caravana; se estiver vazio, o PDF reserva uma linha para preenchimento à mão.
+
+Clique em **Gerar lista de conferência** e depois **Baixar lista de conferência**. O PDF é A4, com nome, unidade, poltrona, quadrados para ida/retorno e espaço para observações. Cabeçalho, total de passageiros e títulos das colunas são repetidos nas páginas. Poltronas são ordenadas naturalmente (1, 2, 10); poltronas vazias ficam no final.
+
+A lista usa os dados corrigidos na tabela e pode ser gerada sem gerar os crachás. Não contém telefones nem informações de convênio. Mudar os dados incluídos, responsável, ordenação ou data remove o download anterior para evitar uma lista desatualizada. A lista é destinada ao controle manual no papel: as marcações feitas na impressão não são salvas no aplicativo.

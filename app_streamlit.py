@@ -117,3 +117,34 @@ if 'pdf' in st.session_state:
     except Exception:
         logging.exception('Falha ao renderizar prévia')
         st.warning('Não foi possível exibir a prévia. Baixe o PDF para conferir os crachás.')
+
+# A lista pode ser impressa independentemente da geração de crachás.
+if df is not None:
+    from conferencia import gerar_lista
+    st.subheader('Lista de conferência para impressão')
+    st.caption('Lista em A4 com nome, unidade, poltrona e espaços para ida, retorno e observações.')
+    abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'])
+    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'])
+    data_viagem = st.date_input('Data da viagem (opcional)', value=None, format='DD/MM/YYYY')
+    dados_lista = df if abrangencia == 'Todos os participantes' else selecionados
+    assinatura_lista = sha256(dados_lista.to_json().encode()
+                             + repr((ordem_lista, data_viagem, responsavel)).encode()).hexdigest()
+    if st.session_state.get('assinatura_lista') != assinatura_lista:
+        st.session_state.pop('lista_pdf', None)
+        st.session_state['assinatura_lista'] = assinatura_lista
+    st.caption(f'{len(dados_lista)} participantes na lista. Responsável: {responsavel.strip() or "preenchimento à mão"}.')
+    if st.button('Gerar lista de conferência', disabled=dados_lista.empty):
+        st.session_state.pop('lista_pdf', None)
+        try:
+            st.session_state['lista_pdf'] = gerar_lista(dados_lista, ordem_lista, data_viagem, responsavel)
+        except ValueError as exc:
+            st.error(str(exc))
+        except Exception:
+            logging.exception('Falha ao gerar lista de conferência')
+            st.error('Não foi possível gerar a lista. Tente novamente.')
+    if 'lista_pdf' in st.session_state:
+        st.download_button('📋 Baixar lista de conferência', st.session_state['lista_pdf'],
+                           file_name='lista_conferencia.pdf', mime='application/pdf', on_click='ignore')
+else:
+    st.session_state.pop('lista_pdf', None)
+    st.session_state.pop('assinatura_lista', None)
