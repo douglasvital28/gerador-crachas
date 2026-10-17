@@ -56,7 +56,7 @@ class MapaTest(unittest.TestCase):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.button(f'assento_{ident}_43_1').disabled)
-            self.assertTrue(any('class="ocupante">Ana' in m.value for m in app.markdown))
+            self.assertTrue(any('class="ocupante">ANA' in m.value for m in app.markdown))
             app.session_state['participantes_' + ident] = {
                 'edited_rows': {1: {'Nome Completo': 'Bruno Corrigido', 'Gerar crachá': False}},
                 'added_rows': [], 'deleted_rows': []}
@@ -64,15 +64,15 @@ class MapaTest(unittest.TestCase):
             app.button(f'assento_{ident}_43_5').click().run()
             self.assertFalse(app.exception)
             salvo = app.session_state['mapa_tabela_' + ident]
-            self.assertEqual(salvo.iloc[1]['Nome Completo'], 'Bruno Corrigido')
+            self.assertEqual(salvo.iloc[1]['Nome Completo'], 'BRUNO CORRIGIDO')
             self.assertEqual(salvo.iloc[1]['Poltrona'], '5')
             self.assertFalse(salvo.iloc[1]['Gerar crachá'])
             self.assertEqual(app.button(f'assento_{ident}_43_5').label, '05 ✓')
-            self.assertTrue(any('class="ocupante">Bruno Corrigido' in m.value for m in app.markdown))
+            self.assertTrue(any('class="ocupante">BRUNO CORRIGIDO' in m.value for m in app.markdown))
             self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
             app.run()
             self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
-            app.session_state['participantes_' + ident + '_r1'] = {
+            app.session_state['participantes_' + ident + '_r' + str(app.session_state['mapa_revisao_' + ident])] = {
                 'edited_rows': {0: {'Unidade': 'Unidade Corrigida'}},
                 'added_rows': [], 'deleted_rows': []}
             app.run()
@@ -82,7 +82,7 @@ class MapaTest(unittest.TestCase):
             self.assertFalse(app.exception)
             app.button('gerar_crachas').click().run()
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
-            self.assertEqual(fields['IGREJA']['/V'], 'Unidade Corrigida')
+            self.assertEqual(fields['IGREJA']['/V'], 'UNIDADE CORRIGIDA')
             self.assertEqual(fields['POLTRONA 2']['/V'], '46')
             app.button('liberar_' + ident).click().run()
             self.assertFalse(app.exception)

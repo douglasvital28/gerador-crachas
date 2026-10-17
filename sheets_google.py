@@ -115,7 +115,7 @@ def atualizar_respostas(anterior, trabalho, novas, coluna_selecao='Gerar crachá
         if chave not in antigas or chave not in recentes:
             continue
         for campo in CAMPOS:
-            if str(resultado.iloc[i][campo]) == str(antigas[chave].get(campo, '')):
+            if str(resultado.iloc[i][campo]).strip().upper() == str(antigas[chave].get(campo, '')).strip().upper():
                 resultado.iat[i, resultado.columns.get_loc(campo)] = recentes[chave].get(campo, '')
     existentes = set(resultado[CAMPO_ID])
     adicionar = novas.loc[~novas[CAMPO_ID].isin(existentes)].copy()

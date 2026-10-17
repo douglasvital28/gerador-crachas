@@ -55,7 +55,7 @@ A lista usa os dados corrigidos na tabela e pode ser gerada sem gerar os crachá
 
 ## Mapa clicável de poltronas
 
-A seção **Escolha de poltronas**, antes da tabela de passageiros, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
+A etapa **3 · Escolher assentos**, depois da conferência da tabela, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
 
 As abas alternam entre os pisos. Um número livre pode ser escolhido; `×` indica ocupação e `✓` a poltrona do passageiro atual. Lugares ocupados mostram o primeiro nome e o último sobrenome abaixo do número. O nome completo continua disponível na ajuda ao passar sobre a poltrona. Lugares de outros passageiros ficam indisponíveis. Clicar em outro lugar livre move o passageiro e libera o anterior; **Liberar poltrona deste passageiro** remove somente a atribuição dele.
 
@@ -68,3 +68,12 @@ O mapa mantém as outras correções e a seleção de impressão da tabela. Atri
 A origem **Google Sheets (teste)** permite conectar uma conta Google e importar uma aba privada de respostas do Forms, associando perguntas aos campos do aplicativo. O login real depende da configuração descrita em [CONFIGURAR_GOOGLE.md](CONFIGURAR_GOOGLE.md). Sem ela, a tela informa que a conexão está em preparação; o upload Excel continua funcionando.
 
 O protótipo preserva correções e poltronas na atualização por identificador único da inscrição, com isolamento por conta/planilha/aba. Não inclui armazenamento permanente de viagens: exporte o Excel antes de sair. A autorização real e a leitura de planilhas precisam ser conferidas no aplicativo de teste após cadastrar o projeto Google Cloud e seus usuários de teste.
+
+
+## Jornada de uso
+
+A tela agora segue cinco etapas numeradas: **1. Importar participantes** (Excel ou Google Sheets), **2. Conferir a listagem**, **3. Escolher assentos**, **4. Informar os dados do ônibus** e **5. Gerar documentos da viagem**. Instruções ficam recolhidas em Como usar. A etapa final abre primeiro a lista de embarque; a aba Crachás mantém geração, download e prévia.
+
+Nomes, unidade, plano, contatos e textos de poltrona são padronizados em MAIÚSCULAS antes da conferência e após correções. Plataforma e responsável também são convertidos ao editar. Os dados padronizados são usados no mapa, PDF e planilha exportada. Zeros dos telefones e identificadores internos de inscrição são preservados. Convênio e tipo de contato aparecem em maiúsculas na interface e no Excel; internamente mantêm os valores compatíveis com a marcação do PDF. Não informado corresponde a um campo vazio.
+
+As etapas de assentos, ônibus e documentos aparecem depois de uma importação válida. Um nome apagado precisa ser corrigido antes de prosseguir. A atualização do Google compara textos sem diferenciar maiúsculas/minúsculas para que essa padronização não seja confundida com uma correção manual.

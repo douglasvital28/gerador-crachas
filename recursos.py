@@ -47,6 +47,8 @@ def exportar_planilha(df):
     ws.title = 'Participantes'
     for linha, valores in enumerate([list(df.columns), *df.fillna('').values.tolist()], 1):
         for coluna, valor in enumerate(valores, 1):
+            if linha > 1 and df.columns[coluna - 1] in (CONVENIO, CONTATO):
+                valor = str(valor).upper()
             cell = ws.cell(linha, coluna, str(valor))
             # Conteúdo de usuário é texto literal, inclusive se começar por =.
             cell.data_type = 's'

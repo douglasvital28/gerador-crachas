@@ -79,8 +79,8 @@ class ConferenciaTest(unittest.TestCase):
             self.assertNotIn('lista_pdf', app.session_state)
             app.button('gerar_lista').click().run()
             texto = PdfReader(BytesIO(app.session_state['lista_pdf'])).pages[0].extract_text()
-            self.assertIn('Álvaro', texto)
-            self.assertNotIn('Zélia', texto)
+            self.assertIn('ÁLVARO', texto)
+            self.assertNotIn('ZÉLIA', texto)
             app.selectbox('ordem_lista').set_value('Poltrona').run()
             self.assertNotIn('lista_pdf', app.session_state)
             app.session_state[editor] = {'edited_rows': {0: {'Gerar crachá': False}, 1: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}
