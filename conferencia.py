@@ -1,5 +1,6 @@
 """Lista de passageiros para conferência em papel."""
 from io import BytesIO
+from trajetos import sentidos
 import re
 from xml.sax.saxutils import escape
 from reportlab.lib import colors
@@ -63,13 +64,16 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_res
         linha = [Paragraph(str(indice), centro)]
         altura = 32
         for coluna, campo in enumerate(('Nome Completo', 'Unidade', 'Poltrona'), 1):
-            texto = Paragraph(escape(str(pessoa[campo])), centro if campo == 'Poltrona' else estilo)
+            conteudo = escape(str(pessoa[campo]))
+            if campo == 'Nome Completo' and pessoa.get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA':
+                conteudo += '<br/><b>' + escape(pessoa['Trajeto']) + '</b>'
+            texto = Paragraph(conteudo, centro if campo == 'Poltrona' else estilo)
             _, h = texto.wrap(larguras[coluna] - 10, 10000)
             altura = max(altura, h + 12)
             linha.append(texto)
         if altura > A4[1] - doc.topMargin - doc.bottomMargin - 50:
             raise ValueError(f'Texto muito longo para a lista no participante {indice}. Abrevie nome, unidade ou poltrona.')
-        dados.append([*linha, Caixa(), Caixa(), ''])
+        dados.append([*linha, Caixa() if 'IDA' in sentidos(pessoa) else '-', Caixa() if 'VOLTA' in sentidos(pessoa) else '-', ''])
         alturas.append(altura)
     tabela = Table(dados, colWidths=larguras, rowHeights=alturas, repeatRows=1, hAlign='LEFT')
     tabela.setStyle(TableStyle([
@@ -94,7 +98,7 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_res
         canvas.drawString(12*mm, A4[1] - 64, 'Responsável:')
         resp.drawOn(canvas, 12*mm + 70, A4[1] - 56 - altura_resp)
         canvas.setFont('Helvetica', 8)
-        canvas.drawString(12*mm, 20, 'Marque os quadrados na ida e no retorno. Use Observações para anotações.')
+        canvas.drawString(12*mm, 20, 'Marque os quadrados na ida e no retorno. Hífen: não viaja neste sentido.')
         canvas.drawRightString(A4[0] - 12*mm, 20, f'Página {documento.page}')
         canvas.restoreState()
 

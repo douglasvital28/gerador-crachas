@@ -1,5 +1,7 @@
 """Mapa para conferência manual, com nomes completos e uma página por piso."""
 from io import BytesIO
+from itertools import product
+from trajetos import conflitam, sentidos
 from xml.sax.saxutils import escape
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -14,7 +16,7 @@ def gerar_mapa_pdf(tabela, modelo):
     if modelo not in MAPAS:
         raise ValueError('Selecione um modelo de ônibus válido.')
     lugares = ocupacao(tabela)
-    if any(len(indices) > 1 for indices in lugares.values()):
+    if any(conflitam(tabela, indices) for indices in lugares.values()):
         raise ValueError('Há poltronas repetidas. Corrija antes de imprimir o mapa.')
     if any(str(v).strip() and numero_poltrona(v) not in range(1, modelo+1) for v in tabela['Poltrona']):
         raise ValueError('Há poltronas fora do modelo ou inválidas. Corrija antes de imprimir o mapa.')
@@ -41,9 +43,10 @@ def gerar_mapa_pdf(tabela, modelo):
                 return
         raise ValueError('Um nome é muito longo para o mapa impresso. Abrevie-o antes de gerar.')
 
-    for piso, filas in MAPAS[modelo].items():
+    direcoes = ['IDA', 'VOLTA'] if any(p.get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA' for _, p in tabela.iterrows()) else [None]
+    for sentido, (piso, filas) in product(direcoes, MAPAS[modelo].items()):
         tipo = 'Semi-leito' if modelo == 44 or (modelo == 56 and piso == 'Piso superior') else 'Leito'
-        cabecalho(tipo.upper() if modelo == 44 else piso.upper() + ' - ' + tipo.upper())
+        cabecalho((tipo.upper() if modelo == 44 else piso.upper() + ' - ' + tipo.upper()) + (' - ' + sentido if sentido else ''))
         pdf.setFont('Helvetica', 9)
         pdf.drawCentredString(largura/2, altura-81, 'FRENTE DO ÔNIBUS')
         duplas = len(filas[0]) == 4
@@ -66,13 +69,13 @@ def gerar_mapa_pdf(tabela, modelo):
                 else:
                     pdf.setFont('Helvetica-Bold', 12)
                     pdf.drawString(x+6, y+rh-16, f'{assento:02d}')
-                    indices = lugares.get(assento, [])
+                    indices = [i for i in lugares.get(assento, []) if sentido is None or sentido in sentidos(tabela.iloc[i])]
                     nome = str(tabela.iloc[indices[0]]['Nome Completo']).upper() if indices else 'LIVRE'
                     texto(nome, x+5, y+4, w-10, rh-24)
         pdf.setFont('Helvetica', 8)
         pdf.drawString(30, 28, 'Conferência manual: nomes completos em destaque. Assentos sem passageiro: LIVRE.')
         pdf.showPage()
-    pendentes = [str(p['Nome Completo']).upper() for _, p in tabela.iterrows() if not str(p['Poltrona']).strip()]
+    pendentes = [str(p['Nome Completo']).upper() + ' - ' + p.get('Trajeto', 'IDA E VOLTA') for _, p in tabela.iterrows() if not str(p['Poltrona']).strip()]
     for inicio in range(0, len(pendentes), 25):
         cabecalho('PASSAGEIROS SEM POLTRONA - ' + str(len(pendentes)) + ' NO TOTAL')
         for i, nome in enumerate(pendentes[inicio:inicio+25]):

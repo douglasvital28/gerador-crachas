@@ -4,6 +4,7 @@ import streamlit as st
 from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf, avisos_duplicidades
 from recursos import validar_caravana, exportar_planilha, renderizar_pagina
 from edicao import validar_edicao
+from trajetos import TRAJETOS, preparar_trajetos
 from padronizacao import maiusculas_participantes, ordenar_por_missao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
@@ -41,6 +42,9 @@ Confira os avisos de nomes e poltronas repetidos antes de continuar.
 A coluna **Gerar crachá** controla quem terá crachá impresso.
 A lista de embarque permite escolher todos ou apenas os selecionados; o mapa impresso inclui todos.
 
+**Trajeto:** todos começam como **IDA E VOLTA**. Observações claras como “só vai”, “somente ida”, “só volta” ou “somente volta” sugerem o sentido na importação; confira e altere a coluna **Trajeto** quando necessário. Uma escolha de trajeto já preenchida tem prioridade sobre as observações. Textos ambíguos mantêm Ida e volta.
+Dois passageiros podem usar a mesma poltrona se um viajar somente na ida e o outro somente na volta. Se houver conflito no mesmo sentido, corrija o trajeto ou a poltrona. O mapa impresso será separado por ida e volta quando houver passageiros de um só sentido; na Lista de Caravanistas, o sentido que não será utilizado aparece com hífen.
+
 ### 3 · Escolha ou revise os assentos
 Organize **um ônibus por planilha** e confirme o modelo:
 
@@ -71,7 +75,7 @@ se não precisar desse contato, deixe ambos vazios.
   Informe a Data de Saída da Caravana, se desejar, e gere a Lista de Caravanistas, com o responsável e seu telefone no cabeçalho, para impressão em A4, com espaços de conferência de ida, retorno e observações.
 - **Mapa do ônibus:** baixe o PDF preenchido em A4, com nomes completos em negrito e uma página por piso.
   Passageiros sem poltrona aparecem em uma relação adicional.
-  Corrija poltronas repetidas, inválidas ou fora do modelo antes de imprimir o mapa.
+  Corrija conflitos de poltrona no mesmo sentido, números inválidos ou fora do modelo antes de imprimir o mapa.
 
 ### Guarde suas escolhas antes de sair
 Use **Baixar planilha com minhas escolhas** para guardar as correções, seleções e poltronas,
@@ -114,11 +118,12 @@ if df_file:
             tabela, hide_index=True, key=chave_editor,
             disabled=[c for c in df.columns if c not in ('Nome Completo', 'Unidade', 'Poltrona',
                       'Nome do Plano', 'Telefone do Plano', 'Nome Contato de Emergência',
-                      'Telefone Contato de Emergência', CONVENIO, CONTATO)],
-            column_order=[coluna_selecao, 'Nome Completo', CONVENIO, CONTATO,
-                          *[c for c in df.columns if c not in ('Nome Completo', CONVENIO, CONTATO)]],
+                      'Telefone Contato de Emergência', 'Trajeto', 'Observações', CONVENIO, CONTATO)],
+            column_order=[coluna_selecao, 'Nome Completo', 'Trajeto', CONVENIO, CONTATO,
+                          *[c for c in df.columns if c not in ('Nome Completo', 'Trajeto', CONVENIO, CONTATO)]],
             column_config={coluna_selecao: st.column_config.CheckboxColumn('Gerar crachá', default=True),
                            '_ID_Inscricao': None,
+                           'Trajeto': st.column_config.SelectboxColumn('Trajeto', options=list(TRAJETOS), required=True),
                            **{c: st.column_config.SelectboxColumn(
                 'Possui convênio?' if c == CONVENIO else 'Tipo de contato',
                 options=['NÃO INFORMADO', *opcoes], required=False, format_func=lambda v: str(v or '').upper(),
@@ -126,7 +131,7 @@ if df_file:
         )
         for campo in OPCOES:
             df[campo] = df[campo].replace('NÃO INFORMADO', '')
-        padronizada = ordenar_por_missao(maiusculas_participantes(df))
+        padronizada = ordenar_por_missao(maiusculas_participantes(preparar_trajetos(df)))
         if not df.equals(padronizada):
             st.session_state['mapa_tabela_' + identidade_planilha] = padronizada
             chave_revisao = 'mapa_revisao_' + identidade_planilha

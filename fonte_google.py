@@ -81,7 +81,7 @@ def conectar_google():
     mapeamento = {}
     for campo in CAMPOS:
         opcoes = [None, *range(len(cabecalho))]
-        iguais = [i for i, titulo in enumerate(cabecalho) if normalizar(titulo) == normalizar(campo)]
+        iguais = [i for i, titulo in enumerate(cabecalho) if normalizar(titulo) == normalizar(campo) or (campo == 'Observações' and normalizar(titulo) == 'observacao')]
         mapeamento[campo] = st.selectbox(campo, opcoes, index=opcoes.index(iguais[0]) if iguais else 0,
                                         format_func=rotulo, key=f'gs_mapa_{contexto}_{hash_colunas}_{campo}')
     st.caption('Para preservar correções na atualização, escolha uma coluna única e estável por inscrição. Pode ser o carimbo de data/hora, se não houver repetições. Não use nome ou poltrona.')

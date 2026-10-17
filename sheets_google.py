@@ -2,12 +2,13 @@
 from hashlib import sha256
 from urllib.parse import urlparse, quote
 import re
+from trajetos import preparar_trajetos
 import pandas as pd
 import requests
 from geracao import COLUNAS, CONVENIO, CONTATO, MAX_PARTICIPANTES, aplicar_missao
 
 CAMPO_ID = '_ID_Inscricao'
-CAMPOS = (*COLUNAS, CONVENIO, CONTATO, 'Missão')
+CAMPOS = (*COLUNAS, CONVENIO, CONTATO, 'Missão', 'Observações', 'Trajeto')
 
 
 def id_planilha(link):
@@ -99,7 +100,7 @@ def mapear_respostas(valores, mapeamento, coluna_id, origem):
         registros.append(registro)
     if not registros:
         raise ValueError('A aba não contém participantes preenchidos.')
-    return aplicar_missao(pd.DataFrame(registros))
+    return preparar_trajetos(aplicar_missao(pd.DataFrame(registros)))
 
 
 def atualizar_respostas(anterior, trabalho, novas, coluna_selecao='Gerar crachá'):

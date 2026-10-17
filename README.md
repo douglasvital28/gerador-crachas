@@ -87,3 +87,9 @@ Na etapa 5, a aba **Mapa do ônibus** permite baixar o mapa em PDF A4, com nomes
 ### Ordem da listagem
 
 A conferência, a seleção de passageiros e a exportação seguem missão e nome: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez. Dentro de cada categoria, os nomes ficam em ordem alfabética, sem considerar prefixos ou acentos na comparação. A coluna opcional Missão/Missao identifica a categoria; prefixos MIN. e PROF. são usados quando a missão não é reconhecida. Demais missões e campos vazios ficam ao final. Poltronas, identificadores e seleção de crachás acompanham cada passageiro. Na lista impressa, Missão e nome é a ordem padrão; Nome e Poltrona continuam disponíveis.
+
+### Passageiros somente de ida ou de volta
+
+A coluna Trajeto permite escolher IDA E VOLTA (padrão), SOMENTE IDA ou SOMENTE VOLTA. Na importação, Observações/Observacoes/Observacao pode sugerir o trajeto para expressões claras como só vai, somente ida, só volta e somente volta. Textos ambíguos mantêm o padrão e devem ser conferidos pelo organizador. Um trajeto já preenchido tem prioridade e é preservado na exportação e reimportação. No Google Sheets, associe Observações e, se houver, Trajeto às perguntas correspondentes.
+
+Dois passageiros podem compartilhar a poltrona quando um viaja somente na ida e o outro somente na volta. O mapa mostra os dois nomes com seus trajetos e bloqueia ocupações simultâneas no mesmo sentido. Ao mudar um trajeto manualmente, confira os avisos de conflito. A Lista de Caravanistas identifica os trajetos parciais e coloca hífen no sentido que não será utilizado; o mapa em PDF separa ida e volta quando necessário.

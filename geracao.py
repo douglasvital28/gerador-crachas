@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 import unicodedata
 import re
+from trajetos import preparar_trajetos, conflitam
 import pandas as pd
 import pymupdf as fitz
 
@@ -57,6 +58,8 @@ def avisos_duplicidades(df):
             chaves = chaves.map(lambda v: str(int(v)) if v.isdecimal() else v)
         for chave in dict.fromkeys(chaves[chaves.ne('') & chaves.duplicated(keep=False)]):
             posicoes = [i for i, v in enumerate(chaves) if v == chave]
+            if coluna == 'Poltrona' and not conflitam(df, posicoes):
+                continue
             avisos.append({'Campo': coluna, 'Valor': str(df.iloc[posicoes[0]][coluna]),
                            'Linhas da planilha': ', '.join(str(linhas[i]) for i in posicoes)})
     return avisos
@@ -144,7 +147,7 @@ def ler_planilha(conteudo):
         raise ValueError('Preencha Nome Completo nas linhas: ' + ', '.join(str(i + 2) for i in sem_nome) + '.')
     if len(df) > MAX_PARTICIPANTES:
         raise ValueError(f'Gere até {MAX_PARTICIPANTES} participantes por vez. Divida a planilha em lotes menores.')
-    resultado = aplicar_missao(validar_opcoes(df)).reset_index(drop=True)
+    resultado = preparar_trajetos(aplicar_missao(validar_opcoes(df))).reset_index(drop=True)
     resultado.attrs['linhas_planilha'] = [int(i) + 2 for i in df.index]
     return resultado
 
