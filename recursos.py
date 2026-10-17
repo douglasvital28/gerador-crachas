@@ -47,6 +47,8 @@ def exportar_planilha(df):
     ws.title = 'Participantes'
     for linha, valores in enumerate([list(df.columns), *df.fillna('').values.tolist()], 1):
         for coluna, valor in enumerate(valores, 1):
+            if linha > 1 and df.columns[coluna - 1] in (CONVENIO, CONTATO):
+                valor = str(valor).upper()
             cell = ws.cell(linha, coluna, str(valor))
             # Conteúdo de usuário é texto literal, inclusive se começar por =.
             cell.data_type = 's'
@@ -61,8 +63,8 @@ def exportar_planilha(df):
     for i, nome in enumerate(df.columns, 1):
         letra = get_column_letter(i)
         ws.column_dimensions[letra].width = 42 if 'Nome' in nome else 28
-        if nome in (CONVENIO, CONTATO):
-            opcoes = 'Sim,Não' if nome == CONVENIO else 'Familiar,Amigo'
+        if nome in (CONVENIO, CONTATO, 'Trajeto'):
+            opcoes = 'IDA E VOLTA,SOMENTE IDA,SOMENTE VOLTA' if nome == 'Trajeto' else 'Sim,Não' if nome == CONVENIO else 'Familiar,Amigo'
             validacao = DataValidation(type='list', formula1=f'"{opcoes}"', allow_blank=True)
             validacao.errorTitle = 'Selecione uma opção'
             validacao.error = 'Use uma das opções da lista ou deixe em branco.'

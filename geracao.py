@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 import unicodedata
 import re
+from trajetos import preparar_trajetos, conflitam
 import pandas as pd
 import pymupdf as fitz
 
@@ -57,6 +58,8 @@ def avisos_duplicidades(df):
             chaves = chaves.map(lambda v: str(int(v)) if v.isdecimal() else v)
         for chave in dict.fromkeys(chaves[chaves.ne('') & chaves.duplicated(keep=False)]):
             posicoes = [i for i, v in enumerate(chaves) if v == chave]
+            if coluna == 'Poltrona' and not conflitam(df, posicoes):
+                continue
             avisos.append({'Campo': coluna, 'Valor': str(df.iloc[posicoes[0]][coluna]),
                            'Linhas da planilha': ', '.join(str(linhas[i]) for i in posicoes)})
     return avisos
@@ -97,6 +100,27 @@ def marcar_opcao(doc, widgets, nome, valor):
         doc.xref_set_key(parent, 'V', '/' + estado)
 
 
+def aplicar_missao(df):
+    """Acrescenta títulos a partir da coluna opcional Missão, sem duplicá-los."""
+    resultado = df.copy(deep=True)
+    colunas = [c for c in resultado.columns if normalizar(c) == 'missao']
+    if not colunas:
+        return resultado
+    if len(colunas) > 1:
+        raise ValueError('Existe mais de uma coluna Missão. Mantenha apenas uma.')
+    def nome_com_titulo(linha):
+        nome = str(linha['Nome Completo']).strip()
+        missao = normalizar(linha[colunas[0]])
+        prefixo = {'ministro': 'MIN.', 'ministra': 'MIN.', 'ministro(a)': 'MIN.',
+                   'professor': 'PROF.', 'professora': 'PROF.', 'professor(a)': 'PROF.'}.get(missao)
+        primeiro = nome.split()[0].casefold().rstrip('.') if nome else ''
+        if nome and prefixo and primeiro not in {'min', 'ministro', 'ministra', 'prof', 'professor', 'professora'}:
+            return prefixo + ' ' + nome
+        return nome
+    resultado['Nome Completo'] = resultado.apply(nome_com_titulo, axis=1)
+    return resultado
+
+
 def ler_planilha(conteudo):
     if len(conteudo) > MAX_UPLOAD_BYTES:
         raise ValueError('A planilha deve ter no máximo 5 MB.')
@@ -123,8 +147,27 @@ def ler_planilha(conteudo):
         raise ValueError('Preencha Nome Completo nas linhas: ' + ', '.join(str(i + 2) for i in sem_nome) + '.')
     if len(df) > MAX_PARTICIPANTES:
         raise ValueError(f'Gere até {MAX_PARTICIPANTES} participantes por vez. Divida a planilha em lotes menores.')
-    resultado = validar_opcoes(df).reset_index(drop=True)
+    resultado = preparar_trajetos(aplicar_missao(validar_opcoes(df))).reset_index(drop=True)
     resultado.attrs['linhas_planilha'] = [int(i) + 2 for i in df.index]
+    return resultado
+
+
+def abreviar_nome_pdf(nome, largura):
+    """Abrevia apenas o meio do nome quando não cabe na fonte normal de 12 pt."""
+    partes = str(nome).split()
+    titulos = {'min', 'ministra', 'ministro', 'prof', 'professora'}
+    primeiro = 0
+    while primeiro < len(partes) and partes[primeiro].casefold().rstrip('.') in titulos:
+        primeiro += 1
+    candidatos = [i for i in range(primeiro+1, len(partes)-1)
+                  if partes[i].casefold() not in {'da', 'de', 'do', 'das', 'dos', 'e'}
+                  and len(partes[i].rstrip('.')) > 1]
+    resultado = ' '.join(partes)
+    for i in sorted(candidatos, key=lambda i: fitz.get_text_length(partes[i], fontname='helv', fontsize=12), reverse=True):
+        if fitz.get_text_length(resultado, fontname='helv', fontsize=12) <= largura:
+            break
+        partes[i] = partes[i][0] + '.'
+        resultado = ' '.join(partes)
     return resultado
 
 
@@ -173,6 +216,8 @@ def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''
                     for widget in widgets:
                         if widget.field_name in campos:
                             valor = campos[widget.field_name]
+                            if widget.field_name in (f'NOME{sufixo}', f'NOME DO CONTATO{sufixo}', f'RESPONSÁVEL DA CARAVANA{sufixo}'):
+                                valor = abreviar_nome_pdf(valor, max(1, widget.rect.width - 6))
                             # Helvetica é suportada pelo formulário e permite medir o texto.
                             widget.text_font = 'Helv'
                             largura = fitz.get_text_length(valor, fontname='helv', fontsize=12)

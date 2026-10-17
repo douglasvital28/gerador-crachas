@@ -18,6 +18,18 @@ def pessoa(nome='Maria da Conceição Aparecida de Oliveira Santos'):
 
 
 class GeracaoTest(unittest.TestCase):
+    def test_plano_0800_sem_ddd_no_pdf(self):
+        valores = ['08001234567', '0800 123 4567', '0800-123-4567', '(0800) 123-4567']
+        linhas = [pessoa('Pessoa ' + str(i)) for i in range(4)]
+        for linha, telefone in zip(linhas, valores):
+            linha[COLUNAS.index('Telefone do Plano')] = telefone
+        pdf = gerar_pdf(ler_planilha(excel(linhas)))
+        campos = PdfReader(BytesIO(pdf)).get_fields()
+        for i, telefone in enumerate(valores):
+            sufixo = '' if i == 0 else f' {i+1}'
+            self.assertEqual(campos['DDD Convenio' + sufixo].get('/V', ''), '')
+            self.assertEqual(campos['TELEFONE DO CONVÊNIO' + sufixo]['/V'], telefone)
+
     def test_separacao_telefones(self):
         for valor, esperado in [
             ('(11) 91234-5678', ('11', '912345678')),
@@ -159,6 +171,30 @@ class GeracaoTest(unittest.TestCase):
                     Path('tmp/pdfs/conferencia.pdf').write_bytes(pdf)
                     with pymupdf.open(stream=pdf, filetype='pdf') as doc:
                         doc[0].get_pixmap(matrix=pymupdf.Matrix(1.4, 1.4)).save('tmp/pdfs/conferencia.png')
+
+    def test_abreviacao_nome_preserva_extremos_e_planilha(self):
+        from geracao import abreviar_nome_pdf
+        nome = 'MIN. BERNARDO DAMASCENO LOPES DA ANUNCIAÇÃO'
+        abreviado = abreviar_nome_pdf(nome, 280)
+        self.assertTrue(abreviado.startswith('MIN. BERNARDO '))
+        self.assertTrue(abreviado.endswith(' DA ANUNCIAÇÃO'))
+        self.assertIn('D.', abreviado)
+        self.assertEqual(abreviar_nome_pdf('ANA SILVA', 280), 'ANA SILVA')
+        tabela = ler_planilha(excel([pessoa(nome)]))
+        pdf = gerar_pdf(tabela)
+        campos = PdfReader(BytesIO(pdf)).get_fields()
+        self.assertNotEqual(campos['NOME']['/V'], nome)
+        self.assertEqual(tabela.iloc[0]['Nome Completo'], nome)
+
+    def test_missao_excel_prefixos_opcionais_e_sem_duplicacao(self):
+        for coluna in ['Missao', 'Missão', ' MISSÃO ']:
+            linhas = [pessoa('Ana Silva') + ['Ministra'], pessoa('Bruno Souza') + ['Professor(a)'],
+                      pessoa('MIN. Carla Santos') + ['Ministro'], pessoa('Daniel Lima') + ['Membro']]
+            tabela = ler_planilha(excel(linhas, [*COLUNAS, coluna]))
+            self.assertEqual(list(tabela['Nome Completo']), ['MIN. Ana Silva', 'PROF. Bruno Souza',
+                                                          'MIN. Carla Santos', 'Daniel Lima'])
+            novamente = ler_planilha(excel(tabela.values.tolist(), list(tabela.columns)))
+            self.assertEqual(list(novamente['Nome Completo']), list(tabela['Nome Completo']))
 
     def test_texto_longo(self):
         with self.assertRaisesRegex(ValueError, 'Texto muito longo'):

@@ -55,10 +55,43 @@ A lista usa os dados corrigidos na tabela e pode ser gerada sem gerar os crachá
 
 ## Mapa clicável de poltronas
 
-A seção **Escolha de poltronas**, antes da tabela de passageiros, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
+A etapa **3 · Escolher assentos**, depois da conferência da tabela, organiza um ônibus por planilha. Selecione Leito 43, Leito 46, Misto 56 ou LD Semi-leito 44 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. No modelo G8 Misto, o piso superior tem semi-leito 1–44 em disposição 2 + 2, e o inferior tem leito 45–56 em disposição 2 + 1. O LD 44 usa duplas dos dois lados do corredor, escada na frente à direita e banheiro ao fundo, conforme a referência. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
 
 As abas alternam entre os pisos. Um número livre pode ser escolhido; `×` indica ocupação e `✓` a poltrona do passageiro atual. Lugares ocupados mostram o primeiro nome e o último sobrenome abaixo do número. O nome completo continua disponível na ajuda ao passar sobre a poltrona. Lugares de outros passageiros ficam indisponíveis. Clicar em outro lugar livre move o passageiro e libera o anterior; **Liberar poltrona deste passageiro** remove somente a atribuição dele.
 
 Poltronas importadas são preservadas, e `001` é reconhecida como 1. Duplicidades e números fora do modelo geram avisos, sem apagar os dados. Trocar de modelo não renumera nem remove lugares. Arquivos sem a coluna Poltrona também são aceitos: o campo é criado vazio para preencher pelo mapa ou tabela.
 
 O mapa mantém as outras correções e a seleção de impressão da tabela. Atribuições aparecem nos crachás, lista de conferência e planilha exportada; resultados anteriores são invalidados quando os dados mudam. As escolhas ficam na sessão individual e não são sincronizadas com outros usuários. Baixe a planilha com as escolhas para guardá-las.
+
+## Google Sheets (teste)
+
+A origem **Google Sheets (teste)** permite conectar uma conta Google e importar uma aba privada de respostas do Forms, associando perguntas aos campos do aplicativo. O login real depende da configuração descrita em [CONFIGURAR_GOOGLE.md](CONFIGURAR_GOOGLE.md). Sem ela, a tela informa que a conexão está em preparação; o upload Excel continua funcionando.
+
+O protótipo preserva correções e poltronas na atualização por identificador único da inscrição, com isolamento por conta/planilha/aba. Não inclui armazenamento permanente de viagens: exporte o Excel antes de sair. A autorização real e a leitura de planilhas precisam ser conferidas no aplicativo de teste após cadastrar o projeto Google Cloud e seus usuários de teste.
+
+
+## Jornada de uso
+
+A tela agora segue cinco etapas numeradas: **1. Importar participantes** (Excel ou Google Sheets), **2. Conferir a listagem**, **3. Escolher assentos**, **4. Informar os dados do ônibus** e **5. Gerar documentos da viagem**. Instruções ficam recolhidas em Como usar. A etapa final abre primeiro a lista de embarque; a aba Crachás mantém geração, download e prévia.
+
+Nomes, unidade, plano, contatos e textos de poltrona são padronizados em MAIÚSCULAS antes da conferência e após correções. Plataforma e responsável também são convertidos ao editar. Os dados padronizados são usados no mapa, PDF e planilha exportada. Zeros dos telefones e identificadores internos de inscrição são preservados. Convênio e tipo de contato aparecem em maiúsculas na interface e no Excel; internamente mantêm os valores compatíveis com a marcação do PDF. Não informado corresponde a um campo vazio.
+
+As etapas de assentos, ônibus e documentos aparecem depois de uma importação válida. Um nome apagado precisa ser corrigido antes de prosseguir. A atualização do Google compara textos sem diferenciar maiúsculas/minúsculas para que essa padronização não seja confundida com uma correção manual.
+
+### Revisão e impressão dos assentos
+
+Quando a importação já traz todos os assentos preenchidos, escolha se deseja revisá-los. Ao escolher Não, o mapa interativo fica oculto e as poltronas são mantidas. Se houver passageiros sem assento, a marcação permanece visível. Confirme o modelo do ônibus mesmo ao dispensar a revisão.
+
+Na etapa 5, a aba **Mapa do ônibus** permite baixar o mapa em PDF A4, com nomes completos em negrito e uma página por piso. Todos os passageiros entram no mapa, independentemente da seleção de crachás. Quem estiver sem poltrona aparece em uma relação adicional. Poltronas duplicadas, inválidas ou fora do modelo precisam ser corrigidas antes de imprimir.
+
+### Ordem da listagem
+
+A conferência, a seleção de passageiros e a exportação seguem missão e nome: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez. Dentro de cada categoria, os nomes ficam em ordem alfabética, sem considerar prefixos ou acentos na comparação. A coluna opcional Missão/Missao identifica a categoria; prefixos MIN. e PROF. são usados quando a missão não é reconhecida. Demais missões e campos vazios ficam ao final. Poltronas, identificadores e seleção de crachás acompanham cada passageiro. Na lista impressa, Missão e nome é a ordem padrão; Nome e Poltrona continuam disponíveis.
+
+### Passageiros somente de ida ou de volta
+
+A coluna Trajeto permite escolher IDA E VOLTA (padrão), SOMENTE IDA ou SOMENTE VOLTA. Na importação, Observações/Observacoes/Observacao pode sugerir o trajeto para expressões claras como só vai, somente ida, só volta e somente volta. Textos ambíguos mantêm o padrão e devem ser conferidos pelo organizador. Um trajeto já preenchido tem prioridade e é preservado na exportação e reimportação. No Google Sheets, associe Observações e, se houver, Trajeto às perguntas correspondentes.
+
+Dois passageiros podem compartilhar a poltrona quando um viaja somente na ida e o outro somente na volta. O mapa mostra os dois nomes com seus trajetos e bloqueia ocupações simultâneas no mesmo sentido. Ao mudar um trajeto manualmente, confira os avisos de conflito. A Lista de Caravanistas identifica os trajetos parciais e coloca hífen no sentido que não será utilizado; o mapa em PDF separa ida e volta quando necessário.
+
+A leitura das observações também reconhece conjugações como não retornarei com a caravana, não voltarei com o grupo, voltarei de carro, retorno por meios próprios, não irei com a caravana e só retornarei. Perguntas, dúvidas (talvez, depende, se...) e referências a familiares ou acompanhantes mantêm Ida e volta para revisão. A regra distingue negar o retorno na caravana de negar outro transporte: não voltarei de carro não define trajeto parcial.

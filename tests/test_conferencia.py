@@ -13,6 +13,18 @@ from hashlib import sha256
 
 
 class ConferenciaTest(unittest.TestCase):
+    def test_cabecalho_caravanistas_com_responsavel_e_telefone(self):
+        dados = gerar_lista(ler_planilha(excel([pessoa('Ana')]*30)),
+                           data_viagem=date(2026, 11, 1), responsavel='MIN. MARIA SILVA',
+                           telefone_responsavel='(11) 99999-1234')
+        leitor = PdfReader(BytesIO(dados))
+        self.assertGreater(len(leitor.pages), 1)
+        for pagina in leitor.pages:
+            texto = pagina.extract_text()
+            for esperado in ['Lista de Caravanistas', 'Data de Saída da Caravana: 01/11/2026',
+                             'Total de passageiros: 30', 'MIN. MARIA SILVA', '(11) 99999-1234']:
+                self.assertIn(esperado, texto)
+
     def test_limite_400_e_campos_para_preenchimento_manual(self):
         df = ler_planilha(excel([pessoa(f'Passageiro {i:03d}') for i in range(1, 401)]))
         pdf = gerar_lista(df)
@@ -45,7 +57,7 @@ class ConferenciaTest(unittest.TestCase):
         self.assertGreater(len(reader.pages), 1)
         textos = [p.extract_text() for p in reader.pages]
         for texto in textos:
-            for esperado in ['Lista de conferência', '01/11/2026', '48', 'José da Silva', 'Observações', 'Retorno']:
+            for esperado in ['Lista de Caravanistas', '01/11/2026', '48', 'José da Silva', 'Observações', 'Retorno']:
                 self.assertIn(esperado, texto)
         texto = '\n'.join(textos)
         for i in range(1, 48):
@@ -74,13 +86,13 @@ class ConferenciaTest(unittest.TestCase):
             self.assertIn('lista_pdf', app.session_state)
             self.assertNotIn('pdf', app.session_state)
             editor = 'participantes_' + sha256(dados).hexdigest()
-            app.session_state[editor] = {'edited_rows': {0: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}
+            app.session_state[editor] = {'edited_rows': {1: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}
             app.selectbox('abrangencia_lista').set_value('Apenas os selecionados').run()
             self.assertNotIn('lista_pdf', app.session_state)
             app.button('gerar_lista').click().run()
             texto = PdfReader(BytesIO(app.session_state['lista_pdf'])).pages[0].extract_text()
-            self.assertIn('Álvaro', texto)
-            self.assertNotIn('Zélia', texto)
+            self.assertIn('ÁLVARO', texto)
+            self.assertNotIn('ZÉLIA', texto)
             app.selectbox('ordem_lista').set_value('Poltrona').run()
             self.assertNotIn('lista_pdf', app.session_state)
             app.session_state[editor] = {'edited_rows': {0: {'Gerar crachá': False}, 1: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}

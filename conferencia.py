@@ -1,5 +1,6 @@
 """Lista de passageiros para conferência em papel."""
 from io import BytesIO
+from trajetos import sentidos
 import re
 from xml.sax.saxutils import escape
 from reportlab.lib import colors
@@ -22,6 +23,9 @@ class Caixa(Flowable):
 
 
 def ordenar_participantes(df, ordem):
+    if ordem == 'Missão e nome':
+        from padronizacao import ordenar_por_missao
+        return ordenar_por_missao(df)
     if ordem not in ('Nome', 'Poltrona'):
         raise ValueError('Escolha ordenação por Nome ou Poltrona.')
     def chave(i):
@@ -36,13 +40,15 @@ def ordenar_participantes(df, ordem):
     return df.iloc[sorted(range(len(df)), key=chave)].copy()
 
 
-def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
+def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_responsavel=''):
     if not 1 <= len(df) <= MAX_PARTICIPANTES:
         raise ValueError('Selecione entre 1 e 400 participantes para gerar a lista.')
     df = ordenar_participantes(df, ordem)
     estilo = ParagraphStyle('Celula', fontName='Helvetica', fontSize=9, leading=12)
     centro = ParagraphStyle('Centro', parent=estilo, alignment=TA_CENTER)
-    resp = Paragraph(escape(str(responsavel).strip()) or '________________________________________', estilo)
+    nome_resp = escape(str(responsavel).strip()) or '________________________________________'
+    contato = escape(str(telefone_responsavel).strip()) or '____________________'
+    resp = Paragraph(f'<b>{nome_resp}</b> · Telefone: {contato}', estilo)
     largura = A4[0] - 24 * mm
     _, altura_resp = resp.wrap(largura - 70, 1000)
     if altura_resp > 60:
@@ -50,7 +56,7 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
     output = BytesIO()
     doc = SimpleDocTemplate(output, pagesize=A4, leftMargin=12*mm, rightMargin=12*mm,
                             topMargin=75 + altura_resp, bottomMargin=36,
-                            title='Lista de conferência de passageiros', author='Gerador de Crachás')
+                            title='Lista de Caravanistas', author='Gerador de Crachás')
     larguras = [v * mm for v in (11, 53, 32, 13, 12, 16, 49)]
     dados = [['Nº', 'Nome', 'Unidade', 'Poltrona', 'Ida', 'Retorno', 'Observações']]
     alturas = [24]
@@ -58,13 +64,16 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
         linha = [Paragraph(str(indice), centro)]
         altura = 32
         for coluna, campo in enumerate(('Nome Completo', 'Unidade', 'Poltrona'), 1):
-            texto = Paragraph(escape(str(pessoa[campo])), centro if campo == 'Poltrona' else estilo)
+            conteudo = escape(str(pessoa[campo]))
+            if campo == 'Nome Completo' and pessoa.get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA':
+                conteudo += '<br/><b>' + escape(pessoa['Trajeto']) + '</b>'
+            texto = Paragraph(conteudo, centro if campo == 'Poltrona' else estilo)
             _, h = texto.wrap(larguras[coluna] - 10, 10000)
             altura = max(altura, h + 12)
             linha.append(texto)
         if altura > A4[1] - doc.topMargin - doc.bottomMargin - 50:
             raise ValueError(f'Texto muito longo para a lista no participante {indice}. Abrevie nome, unidade ou poltrona.')
-        dados.append([*linha, Caixa(), Caixa(), ''])
+        dados.append([*linha, Caixa() if 'IDA' in sentidos(pessoa) else '-', Caixa() if 'VOLTA' in sentidos(pessoa) else '-', ''])
         alturas.append(altura)
     tabela = Table(dados, colWidths=larguras, rowHeights=alturas, repeatRows=1, hAlign='LEFT')
     tabela.setStyle(TableStyle([
@@ -82,14 +91,14 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel=''):
     def cabecalho(canvas, documento):
         canvas.saveState()
         canvas.setFont('Helvetica-Bold', 15)
-        canvas.drawString(12*mm, A4[1] - 30, 'Lista de conferência de passageiros')
+        canvas.drawString(12*mm, A4[1] - 30, 'Lista de Caravanistas')
         canvas.setFont('Helvetica', 9)
         data = data_viagem.strftime('%d/%m/%Y') if data_viagem else '____/____/________'
-        canvas.drawString(12*mm, A4[1] - 47, f'Data da viagem: {data}     Total de passageiros: {len(df)}')
+        canvas.drawString(12*mm, A4[1] - 47, f'Data de Saída da Caravana: {data}     Total de passageiros: {len(df)}')
         canvas.drawString(12*mm, A4[1] - 64, 'Responsável:')
         resp.drawOn(canvas, 12*mm + 70, A4[1] - 56 - altura_resp)
         canvas.setFont('Helvetica', 8)
-        canvas.drawString(12*mm, 20, 'Marque os quadrados na ida e no retorno. Use Observações para anotações.')
+        canvas.drawString(12*mm, 20, 'Marque os quadrados na ida e no retorno. Hífen: não viaja neste sentido.')
         canvas.drawRightString(A4[0] - 12*mm, 20, f'Página {documento.page}')
         canvas.restoreState()
 
