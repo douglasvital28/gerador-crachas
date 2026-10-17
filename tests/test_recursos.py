@@ -38,7 +38,7 @@ class RecursosTest(unittest.TestCase):
             for cell in row:
                 self.assertNotEqual(cell.data_type, 'f')
         self.assertEqual(ws.freeze_panes, 'A2')
-        self.assertEqual(len(ws.data_validations.dataValidation), 2)
+        self.assertEqual(len(ws.data_validations.dataValidation), 3)
         restaurado = ler_planilha(resultado)
         self.assertEqual(restaurado.to_dict('records'), df.to_dict('records'))
         self.assertEqual(restaurado.iloc[0]['Poltrona'], '001')

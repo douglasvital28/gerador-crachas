@@ -11,12 +11,49 @@ from geracao import ler_planilha
 
 
 class SelecaoTest(unittest.TestCase):
+    def test_mapa_compativel_com_funcao_anterior_em_memoria(self):
+        from mapa_onibus import mostrar_mapa
+        dados = excel([pessoa()])
+        def mapa_anterior(tabela, identidade):
+            return mostrar_mapa(tabela, identidade)
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
+             patch('mapa_onibus.mostrar_mapa', side_effect=mapa_anterior):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(any(h.value == '3 · Escolher assentos' for h in app.subheader))
+            self.assertFalse(app.button('gerar_crachas').disabled)
+
+    def test_jornada_em_ordem_maiusculas_e_identificador_preservado(self):
+        from geracao import COLUNAS
+        dados = excel([pessoa('Min. Maria da Conceição Souza') + ['registro-aBc']],
+                      [*COLUNAS, '_ID_Inscricao'])
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
+             patch('recursos.exportar_planilha', wraps=exportar_planilha) as exportar:
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            self.assertEqual([h.value for h in app.subheader][:5], [
+                '1 · Importar participantes', '2 · Conferir a listagem', '3 · Escolher assentos',
+                '4 · Informar os dados do ônibus', '5 · Gerar documentos da viagem'])
+            atual = exportar.call_args.args[0]
+            self.assertEqual(atual.iloc[0]['Nome Completo'], 'MIN. MARIA DA CONCEIÇÃO SOUZA')
+            self.assertEqual(atual.iloc[0]['_ID_Inscricao'], 'registro-aBc')
+            self.assertEqual(atual.iloc[0]['Telefone do Plano'], '0112345678')
+            app.text_input('responsavel').set_value('Min. José Silva').run()
+            app.text_input('plataforma').set_value('Setor a').run()
+            self.assertEqual(app.text_input('responsavel').value, 'MIN. JOSÉ SILVA')
+            self.assertEqual(app.text_input('plataforma').value, 'SETOR A')
+            app.button('gerar_crachas').click().run()
+            fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
+            self.assertEqual(fields['NOME']['/V'], 'MIN. MARIA DA CONCEIÇÃO SOUZA')
+            self.assertEqual(fields['RESPONSÁVEL DA CARAVANA']['/V'], 'MIN. JOSÉ SILVA')
+
     def test_correcao_selecao_e_exportacao_completa(self):
         dados = excel([pessoa(f'Pessoa {i}') for i in range(5)])
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)), \
              patch('recursos.exportar_planilha', wraps=exportar_planilha) as exportar:
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
-            editor = 'participantes_' + sha256(dados).hexdigest()
+            ident = sha256(dados).hexdigest()
+            editor = 'participantes_' + ident
             alteracoes = {i: {'Gerar crachá': False} for i in range(4)}
             alteracoes[4] = {'Nome Completo': 'Nome Corrigido', 'Poltrona': '009',
                              'Telefone Contato de Emergência': '(21) 91234-5678'}
@@ -26,21 +63,23 @@ class SelecaoTest(unittest.TestCase):
             planilha = ler_planilha(exportar_planilha(exportar.call_args.args[0]))
             self.assertEqual(len(planilha), 5)
             self.assertNotIn('Gerar crachá', planilha.columns)
-            self.assertEqual(planilha.iloc[4]['Poltrona'], '009')
-            app.button[0].click().run()
+            self.assertEqual(planilha.loc[planilha['Nome Completo'].eq('NOME CORRIGIDO'), 'Poltrona'].iloc[0], '009')
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             reader = PdfReader(BytesIO(app.session_state['pdf']))
             self.assertEqual(len(reader.pages), 1)
             fields = reader.get_fields()
-            self.assertEqual(fields['NOME']['/V'], 'Nome Corrigido')
+            self.assertEqual(fields['NOME']['/V'], 'NOME CORRIGIDO')
             self.assertEqual(fields['POLTRONA']['/V'], '009')
             self.assertEqual(fields['DDD Contato']['/V'], '21')
             self.assertFalse(fields['NOME 2'].get('/V'))
-            alteracoes[4]['Gerar crachá'] = False
+            revisao = app.session_state['mapa_revisao_' + ident]
+            editor = 'participantes_' + ident + f'_r{revisao}'
+            alteracoes = {i: {'Gerar crachá': False} for i in range(5)}
             app.session_state[editor] = {'edited_rows': alteracoes, 'added_rows': [], 'deleted_rows': []}
             app.run()
             self.assertFalse(app.exception)
-            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.button('gerar_crachas').disabled)
             self.assertNotIn('pdf', app.session_state)
             self.assertTrue(app.info)
 
@@ -53,7 +92,7 @@ class SelecaoTest(unittest.TestCase):
                                          'added_rows': [], 'deleted_rows': []}
             app.run()
             self.assertFalse(app.exception)
-            self.assertTrue(app.button[0].disabled)
+            self.assertFalse(any(b.key == 'gerar_crachas' for b in app.button))
             self.assertIn('Nome Completo', app.error[0].value)
 
     def test_previa_navegavel_e_validacao(self):
@@ -64,12 +103,12 @@ class SelecaoTest(unittest.TestCase):
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             app.text_input[0].set_value('25:00').run()
-            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.button('gerar_crachas').disabled)
             self.assertTrue(app.error)
             app.text_input[0].set_value('8:05')
             app.text_input[4].set_value('(11) 91234-5678').run()
-            self.assertFalse(app.button[0].disabled)
-            app.button[0].click().run()
+            self.assertFalse(app.button('gerar_crachas').disabled)
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             self.assertEqual(app.number_input[0].value, 1)
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
@@ -83,7 +122,7 @@ class SelecaoTest(unittest.TestCase):
             self.assertFalse(app.warning)
             app.text_input[0].set_value('9:00').run()
             self.assertNotIn('pdf', app.session_state)
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             self.assertEqual(app.number_input[0].value, 1)
 
     def test_duplicidades_avisam_sem_bloquear(self):
@@ -91,9 +130,9 @@ class SelecaoTest(unittest.TestCase):
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             self.assertFalse(app.exception)
-            self.assertEqual(len(app.warning), 1)
-            self.assertFalse(app.button[0].disabled)
-            app.button[0].click().run()
+            self.assertTrue(any('nomes ou poltronas repetidos' in w.value for w in app.warning))
+            self.assertFalse(app.button('gerar_crachas').disabled)
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             self.assertIn('pdf', app.session_state)
 
@@ -108,7 +147,7 @@ class SelecaoTest(unittest.TestCase):
                 'added_rows': [], 'deleted_rows': [],
             }
             app.run()
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
             self.assertEqual(fields['Possui Convenio 1']['/V'], '/Sim')
