@@ -62,10 +62,16 @@ def mostrar_mapa(tabela, identidade):
                           index=1 if any(44 <= n <= 46 for n in ocupacao(tabela)) else 0,
                           key='mapa_modelo_' + identidade)
     vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip()]
+    chave_passageiro = 'mapa_passageiro_' + identidade
+    if chave_passageiro not in st.session_state:
+        st.session_state[chave_passageiro] = vagas[0] if vagas else 0
     passageiro = st.selectbox('Passageiro para acomodar', list(range(len(tabela))),
-                             index=vagas[0] if vagas else 0,
+                             index=None,
                              format_func=lambda i: f'{i+1}. {tabela.iloc[i]["Nome Completo"]}',
-                             key='mapa_passageiro_' + identidade)
+                             key=chave_passageiro)
+    if passageiro is None:
+        st.info('Selecione um passageiro para visualizar o mapa.')
+        return
     atual_passageiro = tabela.iloc[passageiro]
     st.caption(f'{atual_passageiro["Nome Completo"]} · Poltrona atual: {atual_passageiro["Poltrona"] or "a escolher"}')
     lugares = ocupacao(tabela)

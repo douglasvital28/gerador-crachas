@@ -55,6 +55,9 @@ class MapaTest(unittest.TestCase):
             self.assertEqual(salvo.iloc[1]['Poltrona'], '5')
             self.assertFalse(salvo.iloc[1]['Gerar crachá'])
             self.assertEqual(app.button(f'assento_{ident}_43_5').label, '05 ✓')
+            self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
+            app.run()
+            self.assertEqual(app.selectbox('mapa_passageiro_' + ident).value, 1)
             app.session_state['participantes_' + ident + '_r1'] = {
                 'edited_rows': {0: {'Unidade': 'Unidade Corrigida'}},
                 'added_rows': [], 'deleted_rows': []}
