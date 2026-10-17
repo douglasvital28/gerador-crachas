@@ -3,6 +3,7 @@ from hashlib import sha256
 import streamlit as st
 from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf, avisos_duplicidades
 from recursos import validar_caravana, exportar_planilha, renderizar_pagina
+from edicao import validar_edicao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
@@ -13,7 +14,7 @@ st.download_button('📄 Baixar Planilha Modelo', (BASE / 'modelo_planilha.xlsx'
 st.markdown(f'''
 ### 📝 Como utilizar este gerador
 1. Baixe a planilha modelo e preencha os participantes, mantendo os nomes das colunas.
-2. Envie o Excel e confira a prévia dos dados.
+2. Envie o Excel, corrija os dados na tabela e marque os participantes que receberão crachá.
 3. Preencha as informações da caravana e clique em **Gerar Crachás**.
 4. Confira a prévia do PDF e baixe para imprimir.
 5. Baixe a planilha com suas escolhas para reutilizar em outra geração.
@@ -40,45 +41,62 @@ except ValueError as exc:
     st.error(erro_caravana)
 conteudo = df_file.getvalue() if df_file else b''
 df = None
+selecionados = None
 if df_file:
     try:
         df = ler_planilha(conteudo)
+        st.caption('Corrija os dados diretamente na tabela. Desmarque Gerar crachá para quem não precisa de impressão.')
+        coluna_selecao = 'Gerar crachá'
+        while coluna_selecao in df.columns:
+            coluna_selecao = '_' + coluna_selecao
+        tabela = df.copy()
+        tabela.insert(0, coluna_selecao, True)
+        df = st.data_editor(
+            tabela, hide_index=True, key='participantes_' + sha256(conteudo).hexdigest(),
+            disabled=[c for c in df.columns if c not in ('Nome Completo', 'Unidade', 'Poltrona',
+                      'Nome do Plano', 'Telefone do Plano', 'Nome Contato de Emergência',
+                      'Telefone Contato de Emergência', CONVENIO, CONTATO)],
+            column_order=[coluna_selecao, 'Nome Completo', CONVENIO, CONTATO,
+                          *[c for c in df.columns if c not in ('Nome Completo', CONVENIO, CONTATO)]],
+            column_config={coluna_selecao: st.column_config.CheckboxColumn('Gerar crachá', default=True),
+                           **{c: st.column_config.SelectboxColumn(
+                'Possui convênio?' if c == CONVENIO else 'Tipo de contato',
+                options=['', *opcoes], required=False,
+            ) for c, opcoes in OPCOES.items()}},
+        )
+        mascara = df[coluna_selecao].fillna(False).astype(bool)
+        df = validar_edicao(df.drop(columns=[coluna_selecao]))
+        selecionados = df.loc[mascara].copy()
         duplicidades = avisos_duplicidades(df)
         if duplicidades:
             st.warning('Há nomes ou poltronas repetidos. Confira as linhas indicadas na planilha. '
                        'O aviso não impede a geração: nomes iguais podem ser de pessoas diferentes.')
             st.dataframe(duplicidades, hide_index=True)
-        st.caption(f'{len(df)} participantes · {(len(df) + 3) // 4} páginas de crachás')
-        st.caption('Selecione as opções de convênio e tipo de contato para cada participante.')
-        df = st.data_editor(
-            df, hide_index=True, key='participantes_' + sha256(conteudo).hexdigest(),
-            disabled=[c for c in df.columns if c not in OPCOES],
-            column_order=['Nome Completo', CONVENIO, CONTATO,
-                          *[c for c in df.columns if c not in ('Nome Completo', CONVENIO, CONTATO)]],
-            column_config={c: st.column_config.SelectboxColumn(
-                'Possui convênio?' if c == CONVENIO else 'Tipo de contato',
-                options=['', *opcoes], required=False,
-            ) for c, opcoes in OPCOES.items()},
-        )
+        st.caption(f'{len(selecionados)} de {len(df)} participantes selecionados · {(len(selecionados) + 3) // 4} páginas de crachás')
+        if selecionados.empty:
+            st.info('Marque ao menos um participante na coluna Gerar crachá para gerar o PDF.')
         st.download_button('📊 Baixar planilha com minhas escolhas', exportar_planilha(df),
                            file_name='participantes_atualizados.xlsx',
                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                            on_click='ignore')
-        st.caption('Inclui os participantes e as opções selecionadas. Os dados da caravana acima não fazem parte desta planilha.')
+        st.caption('Inclui todos os participantes com as correções e escolhas, inclusive os desmarcados. Os dados da caravana acima não fazem parte desta planilha.')
     except ValueError as exc:
+        df = None
+        selecionados = None
         st.error(str(exc))
 
 assinatura = sha256(conteudo + repr((horario, plataforma, responsavel, ddd, telefone)).encode()
-                   + (df.to_json().encode() if df is not None else b'')).hexdigest()
+                   + (df.to_json().encode() if df is not None else b'')
+                   + (selecionados.to_json().encode() if selecionados is not None else b'')).hexdigest()
 if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-if st.button('⚙️ Gerar Crachás', disabled=df is None or erro_caravana is not None):
+if st.button('⚙️ Gerar Crachás', disabled=selecionados is None or selecionados.empty or erro_caravana is not None):
     st.session_state.pop('pdf', None)
     try:
         with st.spinner('Gerando crachás…'):
-            st.session_state['pdf'] = gerar_pdf(df, horario_validado, plataforma, responsavel, ddd_validado, telefone_validado)
+            st.session_state['pdf'] = gerar_pdf(selecionados, horario_validado, plataforma, responsavel, ddd_validado, telefone_validado)
     except ValueError as exc:
         st.error(str(exc))
     except Exception:
@@ -90,7 +108,7 @@ if 'pdf' in st.session_state:
     st.download_button('📁 Baixar PDF com os Crachás', st.session_state['pdf'],
                        file_name='crachas_caravana.pdf', mime='application/pdf', on_click='ignore')
     st.subheader('Prévia dos crachás')
-    total_paginas = (len(df) + 3) // 4
+    total_paginas = (len(selecionados) + 3) // 4
     pagina = st.number_input('Página da prévia', min_value=1, max_value=total_paginas,
                              value=1, step=1, key='pagina_' + assinatura)
     try:
