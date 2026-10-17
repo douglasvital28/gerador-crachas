@@ -5,11 +5,22 @@ from unittest.mock import patch
 from pypdf import PdfReader
 from streamlit.testing.v1 import AppTest
 from geracao import BASE, COLUNAS, ler_planilha
-from mapa_onibus import MAPAS, atribuir_poltrona, ocupacao
+from mapa_onibus import MAPAS, atribuir_poltrona, ocupacao, nome_curto
 from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
+    def test_nome_curto_ignora_titulos_iniciais(self):
+        for nome in ['Min. Maria de Souza', 'Ministra Maria de Souza',
+                     'Ministro Maria de Souza', 'Prof. Maria de Souza',
+                     'Professora Maria de Souza', '  MIN.  Maria de Souza ',
+                     'Min. Prof. Maria de Souza']:
+            with self.subTest(nome=nome):
+                self.assertEqual(nome_curto(nome), 'Maria Souza')
+        self.assertEqual(nome_curto('Min. Maria'), 'Maria')
+        self.assertEqual(nome_curto('Min.'), '')
+        self.assertEqual(nome_curto('Maria Min. Souza'), 'Maria Souza')
+
     def test_modelos_conforme_referencias(self):
         for modelo, superior in [(43, 31), (46, 34)]:
             pisos = MAPAS[modelo]

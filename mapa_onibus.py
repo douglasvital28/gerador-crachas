@@ -23,6 +23,9 @@ def numero_poltrona(valor):
 
 def nome_curto(nome):
     partes = str(nome).split()
+    titulos = {'min', 'ministra', 'ministro', 'prof', 'professora'}
+    while partes and partes[0].casefold().rstrip('.') in titulos:
+        partes.pop(0)
     return ' '.join(partes if len(partes) <= 2 else [partes[0], partes[-1]])
 
 
