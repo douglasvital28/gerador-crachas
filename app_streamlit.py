@@ -2,6 +2,7 @@ import logging
 from hashlib import sha256
 import streamlit as st
 from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf, avisos_duplicidades
+from recursos import validar_caravana, exportar_planilha, renderizar_pagina
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
@@ -14,7 +15,8 @@ st.markdown(f'''
 1. Baixe a planilha modelo e preencha os participantes, mantendo os nomes das colunas.
 2. Envie o Excel e confira a prévia dos dados.
 3. Preencha as informações da caravana e clique em **Gerar Crachás**.
-4. Baixe o PDF e confira antes de imprimir.
+4. Confira a prévia do PDF e baixe para imprimir.
+5. Baixe a planilha com suas escolhas para reutilizar em outra geração.
 
 Até **{MAX_PARTICIPANTES} participantes** e **5 MB** por planilha. Campos opcionais podem ficar vazios.
 Preencha telefones como texto no Excel para preservar zeros à esquerda.
@@ -24,11 +26,18 @@ Preencha **Possuí Plano de Saúde?** com Sim/Não e **Tipo de Contato** com Fam
 Você também pode selecionar essas opções na tabela abaixo. Em branco significa sem marcação.
 ''')
 df_file = st.file_uploader('📥 Envie a planilha preenchida (Excel)', type=['xlsx'], max_upload_size=5)
-horario = st.text_input('Horário de Retorno:')
+horario = st.text_input('Horário de Retorno:', placeholder='18:00')
 plataforma = st.text_input('Plataforma:')
 responsavel = st.text_input('Responsável:')
-ddd = st.text_input('DDD:')
-telefone = st.text_input('Telefone do Responsável:')
+ddd = st.text_input('DDD:', placeholder='11')
+telefone = st.text_input('Telefone do Responsável:', placeholder='91234-5678',
+                         help='Você pode informar o número completo com DDD. Os campos são opcionais; preencha ambos ou deixe ambos vazios.')
+erro_caravana = None
+try:
+    horario_validado, ddd_validado, telefone_validado = validar_caravana(horario, ddd, telefone)
+except ValueError as exc:
+    erro_caravana = str(exc)
+    st.error(erro_caravana)
 conteudo = df_file.getvalue() if df_file else b''
 df = None
 if df_file:
@@ -51,6 +60,11 @@ if df_file:
                 options=['', *opcoes], required=False,
             ) for c, opcoes in OPCOES.items()},
         )
+        st.download_button('📊 Baixar planilha com minhas escolhas', exportar_planilha(df),
+                           file_name='participantes_atualizados.xlsx',
+                           mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                           on_click='ignore')
+        st.caption('Inclui os participantes e as opções selecionadas. Os dados da caravana acima não fazem parte desta planilha.')
     except ValueError as exc:
         st.error(str(exc))
 
@@ -60,11 +74,11 @@ if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-if st.button('⚙️ Gerar Crachás', disabled=df is None):
+if st.button('⚙️ Gerar Crachás', disabled=df is None or erro_caravana is not None):
     st.session_state.pop('pdf', None)
     try:
         with st.spinner('Gerando crachás…'):
-            st.session_state['pdf'] = gerar_pdf(df, horario, plataforma, responsavel, ddd, telefone)
+            st.session_state['pdf'] = gerar_pdf(df, horario_validado, plataforma, responsavel, ddd_validado, telefone_validado)
     except ValueError as exc:
         st.error(str(exc))
     except Exception:
@@ -75,3 +89,13 @@ if 'pdf' in st.session_state:
     st.success('✅ Crachás gerados com sucesso! Confira o PDF antes de imprimir.')
     st.download_button('📁 Baixar PDF com os Crachás', st.session_state['pdf'],
                        file_name='crachas_caravana.pdf', mime='application/pdf', on_click='ignore')
+    st.subheader('Prévia dos crachás')
+    total_paginas = (len(df) + 3) // 4
+    pagina = st.number_input('Página da prévia', min_value=1, max_value=total_paginas,
+                             value=1, step=1, key='pagina_' + assinatura)
+    try:
+        st.image(renderizar_pagina(st.session_state['pdf'], pagina - 1), width='stretch',
+                 caption=f'Página {pagina} de {total_paginas}', alt='Prévia da página de crachás gerada')
+    except Exception:
+        logging.exception('Falha ao renderizar prévia')
+        st.warning('Não foi possível exibir a prévia. Baixe o PDF para conferir os crachás.')
