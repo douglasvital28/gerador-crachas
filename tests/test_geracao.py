@@ -174,6 +174,16 @@ class GeracaoTest(unittest.TestCase):
         self.assertNotEqual(campos['NOME']['/V'], nome)
         self.assertEqual(tabela.iloc[0]['Nome Completo'], nome)
 
+    def test_missao_excel_prefixos_opcionais_e_sem_duplicacao(self):
+        for coluna in ['Missao', 'Missão', ' MISSÃO ']:
+            linhas = [pessoa('Ana Silva') + ['Ministra'], pessoa('Bruno Souza') + ['Professor(a)'],
+                      pessoa('MIN. Carla Santos') + ['Ministro'], pessoa('Daniel Lima') + ['Membro']]
+            tabela = ler_planilha(excel(linhas, [*COLUNAS, coluna]))
+            self.assertEqual(list(tabela['Nome Completo']), ['MIN. Ana Silva', 'PROF. Bruno Souza',
+                                                          'MIN. Carla Santos', 'Daniel Lima'])
+            novamente = ler_planilha(excel(tabela.values.tolist(), list(tabela.columns)))
+            self.assertEqual(list(novamente['Nome Completo']), list(tabela['Nome Completo']))
+
     def test_texto_longo(self):
         with self.assertRaisesRegex(ValueError, 'Texto muito longo'):
             gerar_pdf(ler_planilha(excel([pessoa('Nome ' * 100)])))

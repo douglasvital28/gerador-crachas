@@ -15,6 +15,16 @@ def importar(linhas, origem='conta-1/viagem-1'):
 
 
 class GoogleTest(unittest.TestCase):
+    def test_missao_google_e_atualizacao(self):
+        mapa = {'Nome Completo': 1, 'Missão': 2}
+        antes = mapear_respostas([['ID', 'Nome', 'Missao'], ['1', 'Ana Silva', 'Ministro(a)']], mapa, 0, 'viagem')
+        self.assertEqual(antes.iloc[0]['Nome Completo'], 'MIN. Ana Silva')
+        depois = mapear_respostas([['ID', 'Nome', 'Missao'], ['1', 'Ana Silva', 'Professora']], mapa, 0, 'viagem')
+        resultado, _, _ = atualizar_respostas(antes, antes.copy(), depois)
+        self.assertEqual(resultado.iloc[0]['Nome Completo'], 'PROF. Ana Silva')
+        sem_missao = importar([['1', 'Ana Silva', '', 'Central']])
+        self.assertEqual(sem_missao.iloc[0]['Nome Completo'], 'Ana Silva')
+
     def test_interface_importa_atualiza_e_preserva_poltrona(self):
         class Usuario(dict):
             tokens = {'access': 'token-ficticio'}

@@ -13,6 +13,7 @@ with st.expander('Como usar o sistema · passo a passo'):
     st.markdown(f'''### 1 · Importe os participantes
 **Excel:** baixe a **Planilha Modelo**, preencha e envie o arquivo `.xlsx`.
 O limite é de **{MAX_PARTICIPANTES} participantes** e **5 MB** por arquivo.
+A coluna opcional **Missão** acrescenta **MIN.** para Ministro(a) e **PROF.** para Professor(a), sem repetir um prefixo já presente no nome. No Google Sheets, associe também esse campo à pergunta correspondente.
 A coluna de poltrona pode ficar vazia: os assentos podem ser escolhidos no sistema.
 Mantenha os telefones como texto no Excel para preservar zeros à esquerda.
 Nos telefones do plano e do contato de emergência, informe o DDD junto ao número.

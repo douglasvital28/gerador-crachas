@@ -97,6 +97,27 @@ def marcar_opcao(doc, widgets, nome, valor):
         doc.xref_set_key(parent, 'V', '/' + estado)
 
 
+def aplicar_missao(df):
+    """Acrescenta títulos a partir da coluna opcional Missão, sem duplicá-los."""
+    resultado = df.copy(deep=True)
+    colunas = [c for c in resultado.columns if normalizar(c) == 'missao']
+    if not colunas:
+        return resultado
+    if len(colunas) > 1:
+        raise ValueError('Existe mais de uma coluna Missão. Mantenha apenas uma.')
+    def nome_com_titulo(linha):
+        nome = str(linha['Nome Completo']).strip()
+        missao = normalizar(linha[colunas[0]])
+        prefixo = {'ministro': 'MIN.', 'ministra': 'MIN.', 'ministro(a)': 'MIN.',
+                   'professor': 'PROF.', 'professora': 'PROF.', 'professor(a)': 'PROF.'}.get(missao)
+        primeiro = nome.split()[0].casefold().rstrip('.') if nome else ''
+        if nome and prefixo and primeiro not in {'min', 'ministro', 'ministra', 'prof', 'professor', 'professora'}:
+            return prefixo + ' ' + nome
+        return nome
+    resultado['Nome Completo'] = resultado.apply(nome_com_titulo, axis=1)
+    return resultado
+
+
 def ler_planilha(conteudo):
     if len(conteudo) > MAX_UPLOAD_BYTES:
         raise ValueError('A planilha deve ter no máximo 5 MB.')
@@ -123,7 +144,7 @@ def ler_planilha(conteudo):
         raise ValueError('Preencha Nome Completo nas linhas: ' + ', '.join(str(i + 2) for i in sem_nome) + '.')
     if len(df) > MAX_PARTICIPANTES:
         raise ValueError(f'Gere até {MAX_PARTICIPANTES} participantes por vez. Divida a planilha em lotes menores.')
-    resultado = validar_opcoes(df).reset_index(drop=True)
+    resultado = aplicar_missao(validar_opcoes(df)).reset_index(drop=True)
     resultado.attrs['linhas_planilha'] = [int(i) + 2 for i in df.index]
     return resultado
 

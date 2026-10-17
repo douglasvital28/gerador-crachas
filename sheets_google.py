@@ -4,10 +4,10 @@ from urllib.parse import urlparse, quote
 import re
 import pandas as pd
 import requests
-from geracao import COLUNAS, CONVENIO, CONTATO, MAX_PARTICIPANTES
+from geracao import COLUNAS, CONVENIO, CONTATO, MAX_PARTICIPANTES, aplicar_missao
 
 CAMPO_ID = '_ID_Inscricao'
-CAMPOS = (*COLUNAS, CONVENIO, CONTATO)
+CAMPOS = (*COLUNAS, CONVENIO, CONTATO, 'Missão')
 
 
 def id_planilha(link):
@@ -99,7 +99,7 @@ def mapear_respostas(valores, mapeamento, coluna_id, origem):
         registros.append(registro)
     if not registros:
         raise ValueError('A aba não contém participantes preenchidos.')
-    return pd.DataFrame(registros)
+    return aplicar_missao(pd.DataFrame(registros))
 
 
 def atualizar_respostas(anterior, trabalho, novas, coluna_selecao='Gerar crachá'):
@@ -115,6 +115,8 @@ def atualizar_respostas(anterior, trabalho, novas, coluna_selecao='Gerar crachá
         if chave not in antigas or chave not in recentes:
             continue
         for campo in CAMPOS:
+            if campo not in resultado:
+                resultado[campo] = ''
             if str(resultado.iloc[i][campo]).strip().upper() == str(antigas[chave].get(campo, '')).strip().upper():
                 resultado.iat[i, resultado.columns.get_loc(campo)] = recentes[chave].get(campo, '')
     existentes = set(resultado[CAMPO_ID])
