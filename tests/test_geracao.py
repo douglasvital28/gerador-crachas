@@ -160,6 +160,20 @@ class GeracaoTest(unittest.TestCase):
                     with pymupdf.open(stream=pdf, filetype='pdf') as doc:
                         doc[0].get_pixmap(matrix=pymupdf.Matrix(1.4, 1.4)).save('tmp/pdfs/conferencia.png')
 
+    def test_abreviacao_nome_preserva_extremos_e_planilha(self):
+        from geracao import abreviar_nome_pdf
+        nome = 'MIN. BERNARDO DAMASCENO LOPES DA ANUNCIAÇÃO'
+        abreviado = abreviar_nome_pdf(nome, 280)
+        self.assertTrue(abreviado.startswith('MIN. BERNARDO '))
+        self.assertTrue(abreviado.endswith(' DA ANUNCIAÇÃO'))
+        self.assertIn('D.', abreviado)
+        self.assertEqual(abreviar_nome_pdf('ANA SILVA', 280), 'ANA SILVA')
+        tabela = ler_planilha(excel([pessoa(nome)]))
+        pdf = gerar_pdf(tabela)
+        campos = PdfReader(BytesIO(pdf)).get_fields()
+        self.assertNotEqual(campos['NOME']['/V'], nome)
+        self.assertEqual(tabela.iloc[0]['Nome Completo'], nome)
+
     def test_texto_longo(self):
         with self.assertRaisesRegex(ValueError, 'Texto muito longo'):
             gerar_pdf(ler_planilha(excel([pessoa('Nome ' * 100)])))

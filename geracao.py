@@ -128,6 +128,25 @@ def ler_planilha(conteudo):
     return resultado
 
 
+def abreviar_nome_pdf(nome, largura):
+    """Abrevia apenas o meio do nome quando não cabe na fonte normal de 12 pt."""
+    partes = str(nome).split()
+    titulos = {'min', 'ministra', 'ministro', 'prof', 'professora'}
+    primeiro = 0
+    while primeiro < len(partes) and partes[primeiro].casefold().rstrip('.') in titulos:
+        primeiro += 1
+    candidatos = [i for i in range(primeiro+1, len(partes)-1)
+                  if partes[i].casefold() not in {'da', 'de', 'do', 'das', 'dos', 'e'}
+                  and len(partes[i].rstrip('.')) > 1]
+    resultado = ' '.join(partes)
+    for i in sorted(candidatos, key=lambda i: fitz.get_text_length(partes[i], fontname='helv', fontsize=12), reverse=True):
+        if fitz.get_text_length(resultado, fontname='helv', fontsize=12) <= largura:
+            break
+        partes[i] = partes[i][0] + '.'
+        resultado = ' '.join(partes)
+    return resultado
+
+
 def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''):
     if not 1 <= len(df) <= MAX_PARTICIPANTES:
         raise ValueError('Quantidade de participantes inválida.')
@@ -173,6 +192,8 @@ def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''
                     for widget in widgets:
                         if widget.field_name in campos:
                             valor = campos[widget.field_name]
+                            if widget.field_name in (f'NOME{sufixo}', f'NOME DO CONTATO{sufixo}', f'RESPONSÁVEL DA CARAVANA{sufixo}'):
+                                valor = abreviar_nome_pdf(valor, max(1, widget.rect.width - 6))
                             # Helvetica é suportada pelo formulário e permite medir o texto.
                             widget.text_font = 'Helv'
                             largura = fitz.get_text_length(valor, fontname='helv', fontsize=12)

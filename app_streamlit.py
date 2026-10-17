@@ -63,7 +63,7 @@ Use o horário no formato **HH:MM**. Para informar telefone do responsável, pre
 se não precisar desse contato, deixe ambos vazios.
 
 ### 5 · Gere e imprima os documentos
-- **Crachás:** clique em **Gerar Crachás**, confira as páginas na prévia e baixe o PDF.
+- **Crachás:** clique em **Gerar Crachás**, confira as páginas na prévia e baixe o PDF. Nomes longos de participantes, contatos e responsável podem ter nomes do meio abreviados para caber, preservando prefixos, primeiro nome e último sobrenome. O nome completo permanece na planilha.
 - **Lista de embarque:** escolha os participantes e a ordem por nome ou poltrona.
   Informe a data da viagem, se desejar, e gere a lista para impressão em A4, com espaços de conferência de ida, retorno e observações.
 - **Mapa do ônibus:** baixe o PDF preenchido em A4, com nomes completos em negrito e uma página por piso.
