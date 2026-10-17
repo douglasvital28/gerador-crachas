@@ -44,3 +44,13 @@ python -m unittest discover -s tests -v
 ```
 
 Os testes verificam validação, zeros à esquerda, textos grandes, quantidades de 1, 4 e 5 participantes, campos do formulário e preservação de valores entre páginas. Também verificam todas as combinações de marcação nos quatro crachás, em múltiplas páginas, crachás vazios, validação das opções e seleção pela interface. Utilizam dados fictícios.
+
+## Testes automáticos no GitHub
+
+O fluxo **Testes automáticos**, em `.github/workflows/testes.yml`, executa a suíte em Linux com Python 3.11 (mínimo documentado) e 3.13 (versão usada no Streamlit). Ele roda em propostas destinadas à `main`, alterações em `main` e `melhorias-geracao` e também pode ser iniciado manualmente pela aba **Actions** após estar na branch padrão.
+
+Cada proposta mostra dois resultados: **Testes Python 3.11** e **Testes Python 3.13**. Antes de incorporar uma atualização, confira se ambos estão verdes. Em caso de falha, abra **Details** para consultar qual teste ou instalação falhou. Execuções anteriores da mesma referência são canceladas quando uma nova atualização chega.
+
+O fluxo usa apenas leitura do repositório, sem segredos, e testa dados fictícios. Não publica o aplicativo. Os resultados são informativos até serem configurados como verificações obrigatórias em uma regra de proteção da `main`; este fluxo não altera essa configuração do repositório.
+
+Referência: [documentação oficial de testes Python no GitHub Actions](https://docs.github.com/en/actions/tutorials/build-and-test-code/python).
