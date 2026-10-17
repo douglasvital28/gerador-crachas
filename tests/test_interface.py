@@ -27,7 +27,7 @@ class SelecaoTest(unittest.TestCase):
             self.assertEqual(len(planilha), 5)
             self.assertNotIn('Gerar crachá', planilha.columns)
             self.assertEqual(planilha.iloc[4]['Poltrona'], '009')
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             reader = PdfReader(BytesIO(app.session_state['pdf']))
             self.assertEqual(len(reader.pages), 1)
@@ -40,7 +40,7 @@ class SelecaoTest(unittest.TestCase):
             app.session_state[editor] = {'edited_rows': alteracoes, 'added_rows': [], 'deleted_rows': []}
             app.run()
             self.assertFalse(app.exception)
-            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.button('gerar_crachas').disabled)
             self.assertNotIn('pdf', app.session_state)
             self.assertTrue(app.info)
 
@@ -53,7 +53,7 @@ class SelecaoTest(unittest.TestCase):
                                          'added_rows': [], 'deleted_rows': []}
             app.run()
             self.assertFalse(app.exception)
-            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.button('gerar_crachas').disabled)
             self.assertIn('Nome Completo', app.error[0].value)
 
     def test_previa_navegavel_e_validacao(self):
@@ -64,12 +64,12 @@ class SelecaoTest(unittest.TestCase):
         with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             app.text_input[0].set_value('25:00').run()
-            self.assertTrue(app.button[0].disabled)
+            self.assertTrue(app.button('gerar_crachas').disabled)
             self.assertTrue(app.error)
             app.text_input[0].set_value('8:05')
             app.text_input[4].set_value('(11) 91234-5678').run()
-            self.assertFalse(app.button[0].disabled)
-            app.button[0].click().run()
+            self.assertFalse(app.button('gerar_crachas').disabled)
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             self.assertEqual(app.number_input[0].value, 1)
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
@@ -83,7 +83,7 @@ class SelecaoTest(unittest.TestCase):
             self.assertFalse(app.warning)
             app.text_input[0].set_value('9:00').run()
             self.assertNotIn('pdf', app.session_state)
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             self.assertEqual(app.number_input[0].value, 1)
 
     def test_duplicidades_avisam_sem_bloquear(self):
@@ -92,8 +92,8 @@ class SelecaoTest(unittest.TestCase):
             app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
             self.assertFalse(app.exception)
             self.assertTrue(any('nomes ou poltronas repetidos' in w.value for w in app.warning))
-            self.assertFalse(app.button[0].disabled)
-            app.button[0].click().run()
+            self.assertFalse(app.button('gerar_crachas').disabled)
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             self.assertIn('pdf', app.session_state)
 
@@ -108,7 +108,7 @@ class SelecaoTest(unittest.TestCase):
                 'added_rows': [], 'deleted_rows': [],
             }
             app.run()
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
             self.assertEqual(fields['Possui Convenio 1']['/V'], '/Sim')

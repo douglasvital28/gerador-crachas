@@ -55,7 +55,7 @@ A lista usa os dados corrigidos na tabela e pode ser gerada sem gerar os crachá
 
 ## Mapa clicável de poltronas
 
-A seção **Escolha de poltronas**, abaixo da lista de conferência, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
+A seção **Escolha de poltronas**, antes da tabela de passageiros, organiza um ônibus por planilha. Selecione Leito 43 ou 46 lugares, escolha o passageiro e clique no número de uma poltrona livre. O mapa segue as referências fornecidas: no modelo 43, superior 1–31 e inferior 32–43; no modelo 46, superior 1–34 e inferior 35–46. As escadas e as áreas sem poltrona respeitam as posições dos esquemas.
 
 As abas alternam entre os pisos. Um número livre pode ser escolhido; `×` indica ocupação e `✓` a poltrona do passageiro atual. Passe sobre um lugar ocupado para consultar o nome. Lugares de outros passageiros ficam indisponíveis. Clicar em outro lugar livre move o passageiro e libera o anterior; **Liberar poltrona deste passageiro** remove somente a atribuição dele.
 

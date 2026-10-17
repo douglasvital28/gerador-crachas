@@ -66,7 +66,7 @@ class MapaTest(unittest.TestCase):
             app.selectbox('mapa_modelo_' + ident).set_value(46).run()
             app.button(f'assento_{ident}_46_46').click().run()
             self.assertFalse(app.exception)
-            app.button[0].click().run()
+            app.button('gerar_crachas').click().run()
             fields = PdfReader(BytesIO(app.session_state['pdf'])).get_fields()
             self.assertEqual(fields['IGREJA']['/V'], 'Unidade Corrigida')
             self.assertEqual(fields['POLTRONA 2']['/V'], '46')

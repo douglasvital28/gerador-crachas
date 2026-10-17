@@ -46,6 +46,7 @@ selecionados = None
 if df_file:
     try:
         df = ler_planilha(conteudo)
+        area_mapa = st.container()
         st.caption('Corrija os dados diretamente na tabela. Desmarque Gerar crachá para quem não precisa de impressão.')
         coluna_selecao = 'Gerar crachá'
         while coluna_selecao in df.columns:
@@ -97,7 +98,7 @@ if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-if st.button('⚙️ Gerar Crachás', disabled=selecionados is None or selecionados.empty or erro_caravana is not None):
+if st.button('⚙️ Gerar Crachás', key='gerar_crachas', disabled=selecionados is None or selecionados.empty or erro_caravana is not None):
     st.session_state.pop('pdf', None)
     try:
         with st.spinner('Gerando crachás…'):
@@ -128,8 +129,8 @@ if df is not None:
     from conferencia import gerar_lista
     st.subheader('Lista de conferência para impressão')
     st.caption('Lista em A4 com nome, unidade, poltrona e espaços para ida, retorno e observações.')
-    abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'])
-    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'])
+    abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'], key='abrangencia_lista')
+    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'], key='ordem_lista')
     data_viagem = st.date_input('Data da viagem (opcional)', value=None, format='DD/MM/YYYY')
     dados_lista = df if abrangencia == 'Todos os participantes' else selecionados
     assinatura_lista = sha256(dados_lista.to_json().encode()
@@ -138,7 +139,7 @@ if df is not None:
         st.session_state.pop('lista_pdf', None)
         st.session_state['assinatura_lista'] = assinatura_lista
     st.caption(f'{len(dados_lista)} participantes na lista. Responsável: {responsavel.strip() or "preenchimento à mão"}.')
-    if st.button('Gerar lista de conferência', disabled=dados_lista.empty):
+    if st.button('Gerar lista de conferência', key='gerar_lista', disabled=dados_lista.empty):
         st.session_state.pop('lista_pdf', None)
         try:
             st.session_state['lista_pdf'] = gerar_lista(dados_lista, ordem_lista, data_viagem, responsavel)
@@ -156,4 +157,5 @@ else:
 
 if df is not None:
     from mapa_onibus import mostrar_mapa
-    mostrar_mapa(tabela_mapa, identidade_planilha)
+    with area_mapa:
+        mostrar_mapa(tabela_mapa, identidade_planilha)
