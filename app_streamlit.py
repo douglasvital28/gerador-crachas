@@ -5,6 +5,11 @@ from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_plan
 from recursos import validar_caravana, exportar_planilha, renderizar_pagina
 from edicao import validar_edicao
 from trajetos import TRAJETOS, preparar_trajetos
+import padronizacao
+# Atualiza a regra se o Streamlit ainda conservar o módulo anterior na memória.
+if getattr(padronizacao, 'VERSAO_ORDENACAO', None) != 2:
+    from importlib import reload
+    reload(padronizacao)
 from padronizacao import maiusculas_participantes, ordenar_por_missao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
@@ -37,7 +42,7 @@ Para buscar novas inscrições, repita a busca e a atualização: as correções
 Inscrições removidas na origem permanecem disponíveis para conferência.
 
 ### 2 · Confira e corrija a listagem
-A listagem é organizada por missão: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez, em ordem alfabética dentro de cada categoria. Missões não reconhecidas ou vazias ficam ao final; prefixos MIN. e PROF. identificam essas categorias quando a missão não é reconhecida.
+A listagem é organizada por missão: Ministros, Professores, Coordenadores, Assistentes de Ministros, Responsáveis de Setor, Assistentes de Família, Membros, Frequentadores e Primeira Vez, em ordem alfabética dentro de cada categoria. Missões não reconhecidas ou vazias ficam ao final; prefixos MIN. e PROF. identificam essas categorias quando a missão não é reconhecida.
 Revise os nomes, unidades, telefones, convênios, contatos e poltronas diretamente na tabela.
 Os dados dos participantes são padronizados em **MAIÚSCULAS**, inclusive após correções.
 Convênio aceita **SIM / NÃO**; tipo de contato aceita **FAMILIAR / AMIGO**.
