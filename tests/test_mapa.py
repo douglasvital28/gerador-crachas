@@ -10,6 +10,25 @@ from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
+    def test_mapa_visivel_sem_passageiro_selecionado(self):
+        linhas = [pessoa('Ana'), pessoa('Bruno')]
+        linhas[1][2] = ''
+        dados = excel(linhas)
+        ident = sha256(dados).hexdigest()
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            app.selectbox('mapa_passageiro_' + ident).set_value(None).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.button(f'assento_{ident}_43_2').disabled)
+            self.assertEqual(app.button(f'assento_{ident}_43_1').label, '01 ×')
+            self.assertTrue(app.button('liberar_' + ident).disabled)
+            self.assertTrue(any('class="ocupante">ANA' in m.value for m in app.markdown))
+            app.selectbox('mapa_passageiro_' + ident).set_value(1).run()
+            self.assertFalse(app.button(f'assento_{ident}_43_2').disabled)
+            app.button(f'assento_{ident}_43_2').click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state['mapa_tabela_' + ident].iloc[1]['Poltrona'], '2')
+
     def test_revisao_opcional_e_pdf_do_mapa(self):
         from mapa_pdf import gerar_mapa_pdf
         linhas = [pessoa('Min. Ana de Souza'), pessoa('Bruno')]

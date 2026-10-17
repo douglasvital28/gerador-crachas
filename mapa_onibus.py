@@ -106,13 +106,13 @@ def mostrar_mapa(tabela, identidade, titulo=None):
                              format_func=lambda i: ('🟢 ' if str(tabela.iloc[i]['Poltrona']).strip() else '🟠 ') + f'{i+1}. {tabela.iloc[i]["Nome Completo"]} · ' + (f'✓ Poltrona {tabela.iloc[i]["Poltrona"]}' if str(tabela.iloc[i]['Poltrona']).strip() else '○ SEM POLTRONA'),
                              key=chave_passageiro)
     if passageiro is None:
-        st.info('Selecione um passageiro para visualizar o mapa.')
-        return modelo
+        st.info('Selecione um passageiro para atribuir ou liberar uma poltrona. Você pode consultar o mapa abaixo.')
     st.button('Liberar poltrona deste passageiro',
-              disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),
+              disabled=passageiro is None or not str(tabela.iloc[passageiro]['Poltrona']).strip(),
               key='liberar_' + identidade, on_click=salvar, args=(passageiro, None, modelo))
-    atual_passageiro = tabela.iloc[passageiro]
-    st.caption(f'{atual_passageiro["Nome Completo"]} · Poltrona atual: {atual_passageiro["Poltrona"] or "a escolher"}')
+    if passageiro is not None:
+        atual_passageiro = tabela.iloc[passageiro]
+        st.caption(f'{atual_passageiro["Nome Completo"]} · Poltrona atual: {atual_passageiro["Poltrona"] or "a escolher"}')
     lugares = ocupacao(tabela)
     invalidos = [(i+1, str(v)) for i, v in enumerate(tabela['Poltrona'])
                  if str(v).strip() and numero_poltrona(v) not in range(1, modelo+1)]
@@ -169,8 +169,8 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                             st.button(rotulo,
                                       key=f'assento_{identidade}_{modelo}_{assento}', width='stretch',
                                       type='primary' if atual else 'secondary',
-                                      disabled=bool(indices) and not atual,
-                                      help=f'{legenda}: {nomes}' if nomes else f'Atribuir poltrona {assento}',
+                                      disabled=passageiro is None or (bool(indices) and not atual),
+                                      help=f'{legenda}: {nomes}' if nomes else ('Selecione um passageiro para atribuir esta poltrona' if passageiro is None else f'Atribuir poltrona {assento}'),
                                       on_click=salvar, args=(passageiro, assento, modelo))
                             if indices:
                                 visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) for i in indices)
