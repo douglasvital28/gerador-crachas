@@ -64,3 +64,21 @@ O suporte a autenticação é instalado por `streamlit[auth]`. O Streamlit geren
 - [Login e configuração de tokens no Streamlit](https://docs.streamlit.io/develop/api-reference/user/st.login)
 - [Escopos da API Google Sheets](https://developers.google.com/workspace/sheets/api/scopes)
 - [Configuração OAuth para aplicativos web no Google](https://developers.google.com/identity/protocols/oauth2/web-server)
+
+## Páginas públicas e endereço de produção
+
+As páginas de privacidade e termos são abertas sem login e sem importar participantes. O contato público é douglas.vital.28@gmail.com. Os links aparecem também na página inicial.
+
+Após publicar esta alteração na main e conferir os endereços em uma janela sem login, use no Branding:
+
+- Página inicial: https://gerador-crachas-m7wgvbxff7ufbpivmfzfhy.streamlit.app/
+- Política de privacidade: https://gerador-crachas-m7wgvbxff7ufbpivmfzfhy.streamlit.app/?pagina=privacidade
+- Termos de uso: https://gerador-crachas-m7wgvbxff7ufbpivmfzfhy.streamlit.app/?pagina=termos
+
+A existência dessas páginas não confirma publicação ou verificação OAuth pelo Google. Atenda às exigências exibidas pelo Console. Para uso público verificado, podem ser exigidos comprovação dos domínios e revisão dos escopos. Para um pequeno grupo conhecido pessoalmente, confira a exceção de uso pessoal nas regras atuais do Google; limites e avisos de aplicativo não verificado ainda podem se aplicar.
+
+O endereço de retorno OAuth da produção deve ser cadastrado no cliente e repetido em redirect_uri dos Secrets do app principal:
+
+`https://gerador-crachas-m7wgvbxff7ufbpivmfzfhy.streamlit.app/oauth2callback`
+
+Preserve o retorno do teste enquanto ele estiver em uso. Nunca publique client_secret, cookie_secret ou tokens no repositório ou nas páginas públicas.

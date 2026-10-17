@@ -8,8 +8,13 @@ from trajetos import TRAJETOS, preparar_trajetos
 from padronizacao import maiusculas_participantes, ordenar_por_missao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
+from paginas_publicas import mostrar_pagina_publica, links_publicos
+if mostrar_pagina_publica():
+    st.stop()
+
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
 st.caption('Importe os participantes, confira os dados, escolha os assentos e prepare os documentos da viagem.')
+links_publicos()
 with st.expander('Como usar o sistema · passo a passo'):
     st.markdown(f'''### 1 · Importe os participantes
 **Excel:** baixe a **Planilha Modelo**, preencha e envie o arquivo `.xlsx`.
