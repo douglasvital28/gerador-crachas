@@ -22,6 +22,9 @@ class Caixa(Flowable):
 
 
 def ordenar_participantes(df, ordem):
+    if ordem == 'Missão e nome':
+        from padronizacao import ordenar_por_missao
+        return ordenar_por_missao(df)
     if ordem not in ('Nome', 'Poltrona'):
         raise ValueError('Escolha ordenação por Nome ou Poltrona.')
     def chave(i):

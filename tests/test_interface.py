@@ -63,7 +63,7 @@ class SelecaoTest(unittest.TestCase):
             planilha = ler_planilha(exportar_planilha(exportar.call_args.args[0]))
             self.assertEqual(len(planilha), 5)
             self.assertNotIn('Gerar crachá', planilha.columns)
-            self.assertEqual(planilha.iloc[4]['Poltrona'], '009')
+            self.assertEqual(planilha.loc[planilha['Nome Completo'].eq('NOME CORRIGIDO'), 'Poltrona'].iloc[0], '009')
             app.button('gerar_crachas').click().run()
             self.assertFalse(app.exception)
             reader = PdfReader(BytesIO(app.session_state['pdf']))

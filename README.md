@@ -83,3 +83,7 @@ As etapas de assentos, ônibus e documentos aparecem depois de uma importação 
 Quando a importação já traz todos os assentos preenchidos, escolha se deseja revisá-los. Ao escolher Não, o mapa interativo fica oculto e as poltronas são mantidas. Se houver passageiros sem assento, a marcação permanece visível. Confirme o modelo do ônibus mesmo ao dispensar a revisão.
 
 Na etapa 5, a aba **Mapa do ônibus** permite baixar o mapa em PDF A4, com nomes completos em negrito e uma página por piso. Todos os passageiros entram no mapa, independentemente da seleção de crachás. Quem estiver sem poltrona aparece em uma relação adicional. Poltronas duplicadas, inválidas ou fora do modelo precisam ser corrigidas antes de imprimir.
+
+### Ordem da listagem
+
+A conferência, a seleção de passageiros e a exportação seguem missão e nome: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez. Dentro de cada categoria, os nomes ficam em ordem alfabética, sem considerar prefixos ou acentos na comparação. A coluna opcional Missão/Missao identifica a categoria; prefixos MIN. e PROF. são usados quando a missão não é reconhecida. Demais missões e campos vazios ficam ao final. Poltronas, identificadores e seleção de crachás acompanham cada passageiro. Na lista impressa, Missão e nome é a ordem padrão; Nome e Poltrona continuam disponíveis.

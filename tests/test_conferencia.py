@@ -74,7 +74,7 @@ class ConferenciaTest(unittest.TestCase):
             self.assertIn('lista_pdf', app.session_state)
             self.assertNotIn('pdf', app.session_state)
             editor = 'participantes_' + sha256(dados).hexdigest()
-            app.session_state[editor] = {'edited_rows': {0: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}
+            app.session_state[editor] = {'edited_rows': {1: {'Gerar crachá': False}}, 'added_rows': [], 'deleted_rows': []}
             app.selectbox('abrangencia_lista').set_value('Apenas os selecionados').run()
             self.assertNotIn('lista_pdf', app.session_state)
             app.button('gerar_lista').click().run()

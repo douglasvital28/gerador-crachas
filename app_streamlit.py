@@ -4,7 +4,7 @@ import streamlit as st
 from geracao import BASE, MAX_PARTICIPANTES, CONVENIO, CONTATO, OPCOES, ler_planilha, gerar_pdf, avisos_duplicidades
 from recursos import validar_caravana, exportar_planilha, renderizar_pagina
 from edicao import validar_edicao
-from padronizacao import maiusculas_participantes
+from padronizacao import maiusculas_participantes, ordenar_por_missao
 
 st.set_page_config(page_title='Gerador de Crachás', page_icon='🪪')
 st.title('🪪 Gerador de Crachás - Caravanas ao Solo Sagrado de Guarapiranga')
@@ -31,6 +31,7 @@ Para buscar novas inscrições, repita a busca e a atualização: as correções
 Inscrições removidas na origem permanecem disponíveis para conferência.
 
 ### 2 · Confira e corrija a listagem
+A listagem é organizada por missão: Ministros, Professores, Coordenadores, Assistentes de Ministros, Assistentes de Família, Membros, Frequentadores e Primeira Vez, em ordem alfabética dentro de cada categoria. Missões não reconhecidas ou vazias ficam ao final; prefixos MIN. e PROF. identificam essas categorias quando a missão não é reconhecida.
 Revise os nomes, unidades, telefones, convênios, contatos e poltronas diretamente na tabela.
 Os dados dos participantes são padronizados em **MAIÚSCULAS**, inclusive após correções.
 Convênio aceita **SIM / NÃO**; tipo de contato aceita **FAMILIAR / AMIGO**.
@@ -66,7 +67,7 @@ se não precisar desse contato, deixe ambos vazios.
 
 ### 5 · Gere e imprima os documentos
 - **Crachás:** clique em **Gerar Crachás**, confira as páginas na prévia e baixe o PDF. Nomes longos de participantes, contatos e responsável podem ter nomes do meio abreviados para caber, preservando prefixos, primeiro nome e último sobrenome. O nome completo permanece na planilha.
-- **Lista de embarque:** escolha os participantes e a ordem por nome ou poltrona.
+- **Lista de embarque:** escolha os participantes e a ordem por missão e nome, nome ou poltrona.
   Informe a data da viagem, se desejar, e gere a lista para impressão em A4, com espaços de conferência de ida, retorno e observações.
 - **Mapa do ônibus:** baixe o PDF preenchido em A4, com nomes completos em negrito e uma página por piso.
   Passageiros sem poltrona aparecem em uma relação adicional.
@@ -96,9 +97,9 @@ df = None
 selecionados = None
 if df_file:
     try:
-        df = maiusculas_participantes(ler_planilha(conteudo))
+        df = ordenar_por_missao(maiusculas_participantes(ler_planilha(conteudo)))
         st.subheader('2 · Conferir a listagem')
-        st.caption('Corrija os dados diretamente na tabela. Desmarque Gerar crachá para quem não precisa de impressão.')
+        st.caption('Listagem por missão e nome em ordem alfabética. Corrija os dados diretamente na tabela e desmarque Gerar crachá para quem não precisa de impressão.')
         coluna_selecao = 'Gerar crachá'
         while coluna_selecao in df.columns:
             coluna_selecao = '_' + coluna_selecao
@@ -125,7 +126,7 @@ if df_file:
         )
         for campo in OPCOES:
             df[campo] = df[campo].replace('NÃO INFORMADO', '')
-        padronizada = maiusculas_participantes(df)
+        padronizada = ordenar_por_missao(maiusculas_participantes(df))
         if not df.equals(padronizada):
             st.session_state['mapa_tabela_' + identidade_planilha] = padronizada
             chave_revisao = 'mapa_revisao_' + identidade_planilha
@@ -209,7 +210,7 @@ with aba_lista:
     st.subheader('Lista de conferência para impressão')
     st.caption('Lista em A4 com nome, unidade, poltrona e espaços para ida, retorno e observações.')
     abrangencia = st.selectbox('Participantes da lista', ['Todos os participantes', 'Apenas os selecionados'], key='abrangencia_lista')
-    ordem_lista = st.selectbox('Ordenar lista por', ['Nome', 'Poltrona'], key='ordem_lista')
+    ordem_lista = st.selectbox('Ordenar lista por', ['Missão e nome', 'Nome', 'Poltrona'], key='ordem_lista')
     data_viagem = st.date_input('Data da viagem (opcional)', value=None, format='DD/MM/YYYY')
     dados_lista = df if abrangencia == 'Todos os participantes' else selecionados
     assinatura_lista = sha256(dados_lista.to_json().encode()
