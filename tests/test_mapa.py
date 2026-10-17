@@ -10,6 +10,41 @@ from test_geracao import pessoa, excel
 
 
 class MapaTest(unittest.TestCase):
+    def test_revisao_opcional_e_pdf_do_mapa(self):
+        from mapa_pdf import gerar_mapa_pdf
+        linhas = [pessoa('Min. Ana de Souza'), pessoa('Bruno')]
+        linhas[1][2] = '2'
+        dados = excel(linhas)
+        ident = sha256(dados).hexdigest()
+        with patch('streamlit.file_uploader', return_value=BytesIO(dados)):
+            app = AppTest.from_file(str(BASE / 'app_streamlit.py')).run()
+            self.assertFalse(app.exception)
+            self.assertFalse(any(b.key.startswith('assento_') for b in app.button))
+            self.assertTrue(any(b.label == 'Baixar PDF do mapa do ônibus' for b in app.get('download_button')))
+            app.radio('revisar_assentos_' + ident).set_value('Sim').run()
+            self.assertTrue(app.button(f'assento_{ident}_43_1'))
+            app.button('liberar_' + ident).click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state['mapa_tabela_' + ident].iloc[0]['Poltrona'], '')
+        tabela = ler_planilha(dados)
+        for modelo in MAPAS:
+            pdf = PdfReader(BytesIO(gerar_mapa_pdf(tabela, modelo)))
+            self.assertEqual(len(pdf.pages), len(MAPAS[modelo]))
+            texto = ''.join(p.extract_text() for p in pdf.pages)
+            self.assertIn('MIN. ANA DE SOUZA', texto)
+            self.assertIn('BRUNO', texto)
+        tabela.iloc[1, tabela.columns.get_loc('Poltrona')] = ''
+        pdf = PdfReader(BytesIO(gerar_mapa_pdf(tabela, 44)))
+        self.assertEqual(len(pdf.pages), 2)
+        self.assertIn('PASSAGEIROS SEM POLTRONA', pdf.pages[-1].extract_text())
+        self.assertIn('BRUNO', pdf.pages[-1].extract_text())
+        tabela.iloc[1, tabela.columns.get_loc('Poltrona')] = '1'
+        with self.assertRaises(ValueError):
+            gerar_mapa_pdf(tabela, 44)
+        tabela.iloc[1, tabela.columns.get_loc('Poltrona')] = '45'
+        with self.assertRaises(ValueError):
+            gerar_mapa_pdf(tabela, 44)
+
     def test_ld_44_e_identificacao_dos_passageiros(self):
         filas = MAPAS[44]['Semi-leito']
         self.assertEqual(filas[:3], [(1, 2, 4, 3), (5, 6, 'Escada', ''), (9, 10, 8, 7)])

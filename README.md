@@ -77,3 +77,9 @@ A tela agora segue cinco etapas numeradas: **1. Importar participantes** (Excel 
 Nomes, unidade, plano, contatos e textos de poltrona são padronizados em MAIÚSCULAS antes da conferência e após correções. Plataforma e responsável também são convertidos ao editar. Os dados padronizados são usados no mapa, PDF e planilha exportada. Zeros dos telefones e identificadores internos de inscrição são preservados. Convênio e tipo de contato aparecem em maiúsculas na interface e no Excel; internamente mantêm os valores compatíveis com a marcação do PDF. Não informado corresponde a um campo vazio.
 
 As etapas de assentos, ônibus e documentos aparecem depois de uma importação válida. Um nome apagado precisa ser corrigido antes de prosseguir. A atualização do Google compara textos sem diferenciar maiúsculas/minúsculas para que essa padronização não seja confundida com uma correção manual.
+
+### Revisão e impressão dos assentos
+
+Quando a importação já traz todos os assentos preenchidos, escolha se deseja revisá-los. Ao escolher Não, o mapa interativo fica oculto e as poltronas são mantidas. Se houver passageiros sem assento, a marcação permanece visível. Confirme o modelo do ônibus mesmo ao dispensar a revisão.
+
+Na etapa 5, a aba **Mapa do ônibus** permite baixar o mapa em PDF A4, com nomes completos em negrito e uma página por piso. Todos os passageiros entram no mapa, independentemente da seleção de crachás. Quem estiver sem poltrona aparece em uma relação adicional. Poltronas duplicadas, inválidas ou fora do modelo precisam ser corrigidas antes de imprimir.

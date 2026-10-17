@@ -101,7 +101,7 @@ if df is None:
 
 from mapa_onibus import mostrar_mapa
 st.subheader('3 · Escolher assentos')
-mostrar_mapa(tabela_mapa, identidade_planilha)
+modelo_mapa = mostrar_mapa(tabela_mapa, identidade_planilha)
 
 st.subheader('4 · Informar os dados do ônibus')
 def maiuscula_campo(chave):
@@ -130,7 +130,17 @@ if st.session_state.get('assinatura') != assinatura:
     st.session_state.pop('pdf', None)
     st.session_state['assinatura'] = assinatura
 
-aba_crachas, aba_lista = st.tabs(['Crachás', 'Lista de embarque'])
+aba_crachas, aba_lista, aba_mapa = st.tabs(['Crachás', 'Lista de embarque', 'Mapa do ônibus'])
+with aba_mapa:
+    from mapa_pdf import gerar_mapa_pdf
+    st.subheader('Mapa preenchido para impressão')
+    st.caption('A4, uma página por piso, com nomes completos em negrito. Inclui todos os passageiros e uma relação dos que ainda estão sem poltrona.')
+    try:
+        mapa_impresso = gerar_mapa_pdf(tabela_mapa, modelo_mapa or 43)
+        st.download_button('Baixar PDF do mapa do ônibus', mapa_impresso,
+                           file_name='mapa_onibus.pdf', mime='application/pdf', on_click='ignore')
+    except ValueError as exc:
+        st.warning(str(exc))
 with aba_lista:
     from conferencia import gerar_lista
     st.subheader('Lista de conferência para impressão')

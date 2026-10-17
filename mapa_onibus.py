@@ -87,6 +87,15 @@ def mostrar_mapa(tabela, identidade, titulo=None):
                           format_func=lambda n: 'LD Semi-leito · 44 lugares' if n == 44 else 'Misto · 56 lugares (semi-leito + leito)' if n == 56 else f'Leito · {n} lugares',
                           index=2 if any(47 <= n <= 56 for n in ocupacao(tabela)) else (1 if any(44 <= n <= 46 for n in ocupacao(tabela)) else 0),
                           key='mapa_modelo_' + identidade)
+    chave_revisar = 'mapa_importado_completo_' + identidade
+    if chave_revisar not in st.session_state:
+        st.session_state[chave_revisar] = all(str(v).strip() for v in tabela['Poltrona'])
+    if st.session_state[chave_revisar] and all(str(v).strip() for v in tabela['Poltrona']):
+        revisar = st.radio('Deseja revisar os assentos importados?', ['Não', 'Sim'],
+                           horizontal=True, key='revisar_assentos_' + identidade)
+        if revisar == 'Não':
+            st.caption('Assentos importados mantidos. O PDF do mapa continua disponível na etapa 5.')
+            return modelo
     vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip()]
     st.caption('🟢 Com poltrona marcada · 🟠 Sem poltrona — precisa escolher um assento')
     chave_passageiro = 'mapa_passageiro_' + identidade
@@ -98,7 +107,7 @@ def mostrar_mapa(tabela, identidade, titulo=None):
                              key=chave_passageiro)
     if passageiro is None:
         st.info('Selecione um passageiro para visualizar o mapa.')
-        return
+        return modelo
     st.button('Liberar poltrona deste passageiro',
               disabled=not str(tabela.iloc[passageiro]['Poltrona']).strip(),
               key='liberar_' + identidade, on_click=salvar, args=(passageiro, None, modelo))
@@ -168,3 +177,5 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                                 st.markdown(f'<div class="ocupante">{visiveis}</div>', unsafe_allow_html=True)
         st.caption('Superior: semi-leito 1–44 · Inferior: leito 45–56. Numeração conforme o G8 Misto enviado.' if modelo == 56 else 'LD Semi-leito · 44 lugares. Escada e banheiro conforme a referência enviada.' if modelo == 44 else 'Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
     st.caption('As escolhas ficam nesta sessão. Baixe a planilha com as correções para guardar as poltronas.')
+
+    return modelo
