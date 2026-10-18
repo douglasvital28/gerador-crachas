@@ -4,6 +4,7 @@ from pathlib import Path
 import unicodedata
 import re
 from trajetos import preparar_trajetos, conflitam
+from colo import eh_colo, preparar_colo
 import pandas as pd
 import pymupdf as fitz
 
@@ -55,6 +56,7 @@ def avisos_duplicidades(df):
     for coluna in ('Nome Completo', 'Poltrona'):
         chaves = df[coluna].fillna('').map(lambda v: ' '.join(normalizar(v).split()))
         if coluna == 'Poltrona':
+            chaves = chaves.where(~df.apply(eh_colo, axis=1), '')
             chaves = chaves.map(lambda v: str(int(v)) if v.isdecimal() else v)
         for chave in dict.fromkeys(chaves[chaves.ne('') & chaves.duplicated(keep=False)]):
             posicoes = [i for i, v in enumerate(chaves) if v == chave]
@@ -147,7 +149,7 @@ def ler_planilha(conteudo):
         raise ValueError('Preencha Nome Completo nas linhas: ' + ', '.join(str(i + 2) for i in sem_nome) + '.')
     if len(df) > MAX_PARTICIPANTES:
         raise ValueError(f'Gere até {MAX_PARTICIPANTES} participantes por vez. Divida a planilha em lotes menores.')
-    resultado = preparar_trajetos(aplicar_missao(validar_opcoes(df))).reset_index(drop=True)
+    resultado = preparar_colo(preparar_trajetos(aplicar_missao(validar_opcoes(df)))).reset_index(drop=True)
     resultado.attrs['linhas_planilha'] = [int(i) + 2 for i in df.index]
     return resultado
 
@@ -174,7 +176,7 @@ def abreviar_nome_pdf(nome, largura):
 def gerar_pdf(df, horario='', plataforma='', responsavel='', ddd='', telefone=''):
     if not 1 <= len(df) <= MAX_PARTICIPANTES:
         raise ValueError('Quantidade de participantes inválida.')
-    df = validar_opcoes(df)
+    df = preparar_colo(validar_opcoes(df))
     with fitz.open() as saida:
         for inicio in range(0, len(df), 4):
             with fitz.open(BASE / 'cracha_template.pdf') as doc:

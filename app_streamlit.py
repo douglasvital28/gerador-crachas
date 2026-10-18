@@ -141,7 +141,7 @@ if df_file:
         )
         for campo in OPCOES:
             df[campo] = df[campo].replace('NÃO INFORMADO', '')
-        padronizada = ordenar_por_missao(maiusculas_participantes(preparar_trajetos(df)))
+        padronizada = ordenar_por_missao(maiusculas_participantes(__import__('colo').preparar_colo(preparar_trajetos(df))))
         if not df.equals(padronizada):
             st.session_state['mapa_tabela_' + identidade_planilha] = padronizada
             chave_revisao = 'mapa_revisao_' + identidade_planilha

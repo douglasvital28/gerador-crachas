@@ -1,3 +1,4 @@
+from colo import eh_colo, acompanhantes
 """Mapas dos leitos 43/46, misto 56 e LD semi-leito 44, conforme referências da caravana."""
 import pandas as pd
 from html import escape
@@ -47,6 +48,7 @@ def nome_curto(nome):
 def ocupacao(tabela):
     lugares = {}
     for i, valor in enumerate(tabela['Poltrona']):
+        if eh_colo(tabela.iloc[i]):continue
         numero = numero_poltrona(valor)
         if numero is not None:
             lugares.setdefault(numero, []).append(i)
@@ -56,6 +58,8 @@ def ocupacao(tabela):
 def atribuir_poltrona(tabela, passageiro, poltrona, modelo):
     if modelo not in MAPAS or not 0 <= passageiro < len(tabela):
         raise ValueError('Passageiro ou modelo inválido.')
+    if eh_colo(tabela.iloc[passageiro]):
+        raise ValueError('Criança de colo não recebe poltrona própria. Escolha o responsável.')
     if poltrona is not None:
         if type(poltrona) is not int or not 1 <= poltrona <= modelo:
             raise ValueError('Poltrona fora do modelo escolhido.')
@@ -97,12 +101,15 @@ def mostrar_mapa(tabela, identidade, titulo=None):
         if revisar == 'Não':
             st.caption('Assentos importados mantidos. O PDF do mapa continua disponível na etapa 5.')
             return modelo
-    vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip()]
+    vagas = [i for i, v in enumerate(tabela['Poltrona']) if not str(v).strip() and not eh_colo(tabela.iloc[i])]
     st.caption('🟢 Com poltrona marcada · 🟠 Sem poltrona — precisa escolher um assento')
     chave_passageiro = 'mapa_passageiro_' + identidade
     if chave_passageiro not in st.session_state:
-        st.session_state[chave_passageiro] = vagas[0] if vagas else 0
-    passageiro = st.selectbox('Passageiro para acomodar', list(range(len(tabela))),
+        st.session_state[chave_passageiro] = vagas[0] if vagas else next((i for i in range(len(tabela)) if not eh_colo(tabela.iloc[i])), None)
+    disponiveis = [i for i in range(len(tabela)) if not eh_colo(tabela.iloc[i])]
+    if chave_passageiro in st.session_state and st.session_state[chave_passageiro] not in [None,*disponiveis]:
+        del st.session_state[chave_passageiro]
+    passageiro = st.selectbox('Passageiro para acomodar', disponiveis,
                              index=None,
                              format_func=lambda i: ('🟢 ' if str(tabela.iloc[i]['Poltrona']).strip() else '🟠 ') + f'{i+1}. {tabela.iloc[i]["Nome Completo"]} · {tabela.iloc[i].get("Trajeto", "IDA E VOLTA")} · ' + (f'✓ Poltrona {tabela.iloc[i]["Poltrona"]}' if str(tabela.iloc[i]['Poltrona']).strip() else '○ SEM POLTRONA'),
                              key=chave_passageiro)
@@ -114,9 +121,12 @@ def mostrar_mapa(tabela, identidade, titulo=None):
     if passageiro is not None:
         atual_passageiro = tabela.iloc[passageiro]
         st.caption(f'{atual_passageiro["Nome Completo"]} · Poltrona atual: {atual_passageiro["Poltrona"] or "a escolher"}')
+    for i in range(len(tabela)):
+        if eh_colo(tabela.iloc[i]):
+            st.caption(str(tabela.iloc[i]['Nome Completo'])+' · COLO · Responsável: '+str(tabela.iloc[i].get('Responsável acompanhante','não informado')))
     lugares = ocupacao(tabela)
     invalidos = [(i+1, str(v)) for i, v in enumerate(tabela['Poltrona'])
-                 if str(v).strip() and numero_poltrona(v) not in range(1, modelo+1)]
+                 if str(v).strip() and not eh_colo(tabela.iloc[i]) and numero_poltrona(v) not in range(1, modelo+1)]
     duplicados = [str(n) for n, indices in lugares.items() if conflitam(tabela, indices) and 1 <= n <= modelo]
     if invalidos:
         st.warning('Há poltronas fora deste mapa ou com formato não reconhecido: '
@@ -178,7 +188,7 @@ FRENTE DO ÔNIBUS<div style="margin:12px auto 0;width:70%;height:18px;border-rad
                                       help=f'{legenda}: {nomes}' if nomes else ('Selecione um passageiro para atribuir esta poltrona' if passageiro is None else f'Atribuir poltrona {assento}'),
                                       on_click=salvar, args=(passageiro, assento, modelo))
                             if indices:
-                                visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) + ('<br><small>' + escape(tabela.iloc[i].get('Trajeto', 'IDA E VOLTA')) + '</small>' if tabela.iloc[i].get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA' else '') for i in indices)
+                                visiveis = '<br>'.join(escape(nome_curto(tabela.iloc[i]['Nome Completo'])) + ''.join('<br><small>COLO: '+escape(nome_curto(tabela.iloc[j]['Nome Completo']))+'</small>' for j in acompanhantes(tabela,i)) + ('<br><small>' + escape(tabela.iloc[i].get('Trajeto', 'IDA E VOLTA')) + '</small>' if tabela.iloc[i].get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA' else '') for i in indices)
                                 st.markdown(f'<div class="ocupante">{visiveis}</div>', unsafe_allow_html=True)
         st.caption('Superior: semi-leito 1–44 · Inferior: leito 45–56. Numeração conforme o G8 Misto enviado.' if modelo == 56 else 'LD Semi-leito · 44 lugares. Escada e banheiro conforme a referência enviada.' if modelo == 44 else 'Lado esquerdo: dupla · lado direito: individual. Mapas conforme os modelos enviados.')
     st.caption('As escolhas ficam nesta sessão. Baixe a planilha com as correções para guardar as poltronas.')

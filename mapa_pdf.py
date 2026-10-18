@@ -1,3 +1,4 @@
+from colo import eh_colo, acompanhantes
 """Mapa para conferência manual, com nomes completos e uma página por piso."""
 from io import BytesIO
 from itertools import product
@@ -18,7 +19,7 @@ def gerar_mapa_pdf(tabela, modelo):
     lugares = ocupacao(tabela)
     if any(conflitam(tabela, indices) for indices in lugares.values()):
         raise ValueError('Há poltronas repetidas. Corrija antes de imprimir o mapa.')
-    if any(str(v).strip() and numero_poltrona(v) not in range(1, modelo+1) for v in tabela['Poltrona']):
+    if any(str(v).strip() and numero_poltrona(v) not in range(1, modelo+1) for i,v in enumerate(tabela['Poltrona']) if not eh_colo(tabela.iloc[i])):
         raise ValueError('Há poltronas fora do modelo ou inválidas. Corrija antes de imprimir o mapa.')
     saida = BytesIO()
     pdf = canvas.Canvas(saida, pagesize=A4)
@@ -71,11 +72,13 @@ def gerar_mapa_pdf(tabela, modelo):
                     pdf.drawString(x+6, y+rh-16, f'{assento:02d}')
                     indices = [i for i in lugares.get(assento, []) if sentido is None or sentido in sentidos(tabela.iloc[i])]
                     nome = str(tabela.iloc[indices[0]]['Nome Completo']).upper() if indices else 'LIVRE'
+                    if indices:
+                        nome += ''.join(' / COLO: '+str(tabela.iloc[j]['Nome Completo']).upper() for j in acompanhantes(tabela,indices[0]) if sentido is None or sentido in sentidos(tabela.iloc[j]))
                     texto(nome, x+5, y+4, w-10, rh-24)
         pdf.setFont('Helvetica', 8)
         pdf.drawString(30, 28, 'Conferência manual: nomes completos em destaque. Assentos sem passageiro: LIVRE.')
         pdf.showPage()
-    pendentes = [str(p['Nome Completo']).upper() + ' - ' + p.get('Trajeto', 'IDA E VOLTA') for _, p in tabela.iterrows() if not str(p['Poltrona']).strip()]
+    pendentes = [str(p['Nome Completo']).upper() + ' - ' + p.get('Trajeto', 'IDA E VOLTA') for _, p in tabela.iterrows() if not str(p['Poltrona']).strip() and not eh_colo(p)]
     for inicio in range(0, len(pendentes), 25):
         cabecalho('PASSAGEIROS SEM POLTRONA - ' + str(len(pendentes)) + ' NO TOTAL')
         for i, nome in enumerate(pendentes[inicio:inicio+25]):
