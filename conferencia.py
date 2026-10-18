@@ -65,6 +65,8 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_res
         altura = 32
         for coluna, campo in enumerate(('Nome Completo', 'Unidade', 'Poltrona'), 1):
             conteudo = escape(str(pessoa[campo]))
+            if campo == 'Nome Completo' and __import__('colo').eh_colo(pessoa):
+                conteudo += '<br/><b>COLO · Responsável: '+escape(str(pessoa.get('Responsável acompanhante','não informado')))+'</b>'
             if campo == 'Nome Completo' and pessoa.get('Trajeto', 'IDA E VOLTA') != 'IDA E VOLTA':
                 conteudo += '<br/><b>' + escape(pessoa['Trajeto']) + '</b>'
             texto = Paragraph(conteudo, centro if campo == 'Poltrona' else estilo)
@@ -94,7 +96,7 @@ def gerar_lista(df, ordem='Nome', data_viagem=None, responsavel='', telefone_res
         canvas.drawString(12*mm, A4[1] - 30, 'Lista de Caravanistas')
         canvas.setFont('Helvetica', 9)
         data = data_viagem.strftime('%d/%m/%Y') if data_viagem else '____/____/________'
-        canvas.drawString(12*mm, A4[1] - 47, f'Data de Saída da Caravana: {data}     Total de passageiros: {len(df)}')
+        canvas.drawString(12*mm, A4[1] - 47, f'Data de Saída da Caravana: {data}     Total de passageiros: {len(df)}' + (f' · {sum(__import__("colo").eh_colo(p) for _,p in df.iterrows())} de colo' if any(__import__('colo').eh_colo(p) for _,p in df.iterrows()) else ''))
         canvas.drawString(12*mm, A4[1] - 64, 'Responsável:')
         resp.drawOn(canvas, 12*mm + 70, A4[1] - 56 - altura_resp)
         canvas.setFont('Helvetica', 8)

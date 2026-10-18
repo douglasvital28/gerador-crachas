@@ -8,7 +8,7 @@ import requests
 from geracao import COLUNAS, CONVENIO, CONTATO, MAX_PARTICIPANTES, aplicar_missao
 
 CAMPO_ID = '_ID_Inscricao'
-CAMPOS = (*COLUNAS, CONVENIO, CONTATO, 'Missão', 'Observações', 'Trajeto')
+CAMPOS = (*COLUNAS, CONVENIO, CONTATO, 'Missão', 'Observações', 'Trajeto', 'Modalidade', 'Responsável acompanhante')
 
 
 def id_planilha(link):
@@ -100,7 +100,7 @@ def mapear_respostas(valores, mapeamento, coluna_id, origem):
         registros.append(registro)
     if not registros:
         raise ValueError('A aba não contém participantes preenchidos.')
-    return preparar_trajetos(aplicar_missao(pd.DataFrame(registros)))
+    return __import__('colo').preparar_colo(preparar_trajetos(aplicar_missao(pd.DataFrame(registros))))
 
 
 def atualizar_respostas(anterior, trabalho, novas, coluna_selecao='Gerar crachá'):

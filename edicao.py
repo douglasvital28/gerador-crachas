@@ -1,6 +1,7 @@
 """Validação das correções feitas na tabela de participantes."""
 from geracao import validar_opcoes
 from trajetos import preparar_trajetos
+from colo import preparar_colo
 
 
 def validar_edicao(df):
@@ -11,4 +12,4 @@ def validar_edicao(df):
         raise ValueError('Preencha Nome Completo na tabela para as linhas da planilha: '
                          + ', '.join(vazios) + '.')
     resultado.attrs = df.attrs.copy()
-    return preparar_trajetos(validar_opcoes(resultado))
+    return preparar_colo(preparar_trajetos(validar_opcoes(resultado)))
