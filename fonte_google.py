@@ -9,6 +9,17 @@ from recursos import exportar_planilha
 from sheets_google import CAMPOS, CAMPO_ID, id_planilha, abas_planilha, respostas_planilha, mapear_respostas, atualizar_respostas
 
 
+def pedido_gestor():
+    """(planilha, aba) do botão do Gestor de Caravanas; None sem link válido."""
+    planilha = str(st.query_params.get('planilha', '')).strip()
+    aba = str(st.query_params.get('aba', '')).strip()
+    try:
+        planilha = id_planilha(planilha) if planilha else None
+    except ValueError:
+        return None
+    return (planilha, aba) if planilha and 0 < len(aba) <= 100 else None
+
+
 def conectar_google():
     try:
         auth = st.secrets.get('auth', {})
@@ -18,7 +29,11 @@ def conectar_google():
     if not configurado:
         st.info('A conexão Google está em preparação. O administrador precisa configurar o projeto Google Cloud e os segredos do aplicativo.')
         return None
+    pedido = pedido_gestor()
     if not st.user.get('is_logged_in', False):
+        if pedido:
+            st.info(f'Planilha enviada pelo Gestor de Caravanas (aba {pedido[1]}). Conecte sua conta Google. '
+                    'Se a planilha não abrir em seguida, volte ao gestor e clique novamente no botão do ônibus.')
         st.caption('Conecte sua conta para ler uma planilha privada. O aplicativo não altera sua planilha Google.')
         st.button('Conectar minha conta Google', key='gs_login', on_click=lambda: st.login('google'))
         return None
@@ -42,13 +57,27 @@ def conectar_google():
         st.error('A conta entrou, mas a autorização de leitura não está disponível. Confira expose_tokens e os escopos; depois saia e conecte novamente.')
         return None
     st.info('As correções ficam nesta sessão. Baixe o Excel antes de sair. O cadastro permanente de viagens ainda não está disponível.')
+    # Só com o link do gestor: cada etapa automática acontece uma vez; depois tudo segue manual como sempre.
+    feitas = None
+    if pedido:
+        feitas = st.session_state.setdefault('_gs_gestor_' + sha256('\0'.join(pedido).encode()).hexdigest()[:16], set())
+        if 'link' not in feitas:
+            feitas.add('link')
+            st.session_state['gs_link'] = 'https://docs.google.com/spreadsheets/d/' + pedido[0] + '/edit'
+        st.caption(f'Planilha enviada pelo Gestor de Caravanas · aba {pedido[1]}.')
+    def automatico(etapa):
+        if feitas is None or planilha != pedido[0] or etapa in feitas:
+            return False
+        feitas.add(etapa)
+        return True
     link = st.text_input('Link da planilha de respostas', key='gs_link', placeholder='https://docs.google.com/spreadsheets/d/...')
     try:
         planilha = id_planilha(link) if link.strip() else None
     except ValueError as exc:
         st.error(str(exc))
         return None
-    if st.button('Ler abas da planilha', key='gs_abas', disabled=not planilha):
+    clicou = st.button('Ler abas da planilha', key='gs_abas', disabled=not planilha)
+    if automatico('abas') or clicou:
         try:
             abas = abas_planilha(token, planilha)
             if not abas:
@@ -60,9 +89,16 @@ def conectar_google():
     meta = st.session_state.get('_gs_metadados')
     if not meta or meta[0] != planilha:
         return None
+    if automatico('aba'):
+        if pedido[1] in meta[1]:
+            st.session_state['gs_aba_' + planilha] = pedido[1]
+        else:
+            feitas.update({'buscar', 'importar'})
+            st.warning(f'A aba {pedido[1]} não existe nesta planilha. Atualize a planilha no gestor e clique novamente no botão, ou escolha a aba abaixo.')
     aba = st.selectbox('Aba com as respostas do Forms', meta[1], key='gs_aba_' + planilha)
     contexto = sha256((dono + '\0' + planilha + '\0' + aba).encode()).hexdigest()
-    if st.button('Buscar respostas no Google', key='gs_buscar'):
+    clicou = st.button('Buscar respostas no Google', key='gs_buscar')
+    if (pedido and aba == pedido[1] and automatico('buscar')) or clicou:
         try:
             valores = respostas_planilha(token, planilha, aba)
             st.session_state['_gs_respostas'] = (contexto, valores)
@@ -85,12 +121,13 @@ def conectar_google():
         mapeamento[campo] = st.selectbox(campo, opcoes, index=opcoes.index(iguais[0]) if iguais else 0,
                                         format_func=rotulo, key=f'gs_mapa_{contexto}_{hash_colunas}_{campo}')
     st.caption('Para preservar correções na atualização, escolha uma coluna única e estável por inscrição. Pode ser o carimbo de data/hora, se não houver repetições. Não use nome ou poltrona.')
-    candidatos = [i for i, v in enumerate(cabecalho) if normalizar(v) in ('carimbo de data/hora', 'timestamp')]
+    candidatos = [i for i, v in enumerate(cabecalho) if normalizar(v) in ('carimbo de data/hora', 'timestamp', 'id da inscricao')]
     coluna_id = st.selectbox('Identificador único da inscrição', list(range(len(cabecalho))),
                             index=candidatos[0] if candidatos else None, format_func=rotulo,
                             key=f'gs_id_{contexto}_{hash_colunas}')
     escolha = sha256(json.dumps([contexto, mapeamento, coluna_id], sort_keys=True).encode()).hexdigest()
-    if st.button('Importar / atualizar participantes', key='gs_importar', disabled=coluna_id is None):
+    clicou = st.button('Importar / atualizar participantes', key='gs_importar', disabled=coluna_id is None)
+    if (coluna_id is not None and pedido and aba == pedido[1] and automatico('importar')) or clicou:
         try:
             namespace = contexto + ':' + str(coluna_id) + ':' + str(cabecalho[coluna_id])
             novas = validar_edicao(mapear_respostas(valores, mapeamento, coluna_id, namespace))

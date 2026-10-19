@@ -98,6 +98,10 @@ st.download_button('📄 Baixar Planilha Modelo', (BASE / 'modelo_planilha.xlsx'
                    file_name='modelo_planilha.xlsx',
                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                    on_click='ignore')
+from fonte_google import pedido_gestor
+if pedido_gestor() and 'origem_dados' not in st.session_state:
+    # Link do Gestor de Caravanas: abre já na origem Google.
+    st.session_state['origem_dados'] = 'Google Sheets'
 origem_dados = st.radio('Origem dos participantes', ['Planilha Excel', 'Google Sheets'],
                         horizontal=True, key='origem_dados')
 if origem_dados == 'Google Sheets':
