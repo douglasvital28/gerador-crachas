@@ -79,6 +79,9 @@ A origem **Google Sheets (teste)** permite conectar uma conta Google e importar 
 O protótipo preserva correções e poltronas na atualização por identificador único da inscrição, com isolamento por conta/planilha/aba. Não inclui armazenamento permanente de viagens: exporte o Excel antes de sair. A autorização real e a leitura de planilhas precisam ser conferidas no aplicativo de teste após cadastrar o projeto Google Cloud e seus usuários de teste.
 
 
+### Link do Gestor de Caravanas
+O botão de cada ônibus no Gestor de Caravanas abre o gerador com `?planilha=<ID>&aba=Ônibus N`. Com a conta Google conectada, o gerador escolhe a origem Google Sheets, lê a aba indicada, associa as colunas pelos títulos, usa **ID da inscrição** como identificador e importa uma vez. Depois disso, conferência, assentos, dados do ônibus e documentos seguem como sempre, e os botões continuam disponíveis para buscar novamente. Se a conta ainda não estiver conectada, entre e clique outra vez no botão do gestor. Aba inexistente gera aviso e nada é importado. Sem esses parâmetros, nada muda.
+
 ## Jornada de uso
 
 A tela agora segue cinco etapas numeradas: **1. Importar participantes** (Excel ou Google Sheets), **2. Conferir a listagem**, **3. Escolher assentos**, **4. Informar os dados do ônibus** e **5. Gerar documentos da viagem**. Instruções ficam recolhidas em Como usar. A etapa final abre primeiro a lista de embarque; a aba Crachás mantém geração, download e prévia.
